@@ -5,7 +5,7 @@
  * Copyright 2022 Google LLC
  */
 
-#include "zuma-board.dtsi"
+#include "zuma-akita-board.dtsi"
 
 #include "zuma-akita-audio.dtsi"
 #include "zuma-akita-camera.dtsi"
