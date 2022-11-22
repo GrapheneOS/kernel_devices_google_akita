@@ -3,7 +3,8 @@
 akita_overlays := \
 	../google-dts-base/zuma-emulator.dtbo \
 	../google-dts-base/zuma-hybrid.dtbo \
-	zuma-akita-dev1.dtbo
+	zuma-akita-dev1.dtbo \
+	zuma-akita-dev1-gnss.dtbo
 
 akita_dtbs := ../google-dts-base/zuma-a0.dtb
 
