@@ -6,7 +6,7 @@ akita_overlays := \
 	zuma-akita-dev1.dtbo \
 	zuma-akita-dev1-gnss.dtbo
 
-akita_dtbs := ../google-dts-base/zuma-a0.dtb
+akita_dtbs := ../google-dts-base/zuma-a0.dtb ../google-dts-base/zuma-b0.dtb
 
 # Usage:
 #   $(call DTBS_overlay_template, overlay, base_dtb, suffix)
