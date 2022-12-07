@@ -35,9 +35,17 @@
 	goodix,udfps-y = <1717>;
 	goodix,sleep-enable;
 
+	goodix,panel_map = <&google_ak3a 0>;
+
+	goodix,firmware_names = "goodix_firmware_ak3a.bin";
+
+	goodix,config_names = "goodix_cfg_group_ak3a.bin";
+
+	goodix,test_limits_names = "goodix_test_limits_ak3a.csv";
+
 	goog,touch_offload_id = /bits/ 8 <'a' 'k' '3' '0'>;
 	goog,display-resolution = /bits/ 16 <1080 2400>;
-	goog,channel-num = /bits/ 16 <16 36>;
+	goog,channel-num = /bits/ 16 <16 34>;
 
 	controller-data {
 		samsung,spi-feedback-delay = <0>;
