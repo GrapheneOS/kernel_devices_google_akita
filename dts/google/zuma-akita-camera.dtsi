@@ -193,20 +193,20 @@
 	fragment@lwiscamera {
 		target-path = "/";
 		__overlay__ {
-			/* REAR CAMERA BOITATA */
+			/* REAR CAMERA OKSOKO */
 			sensor0: sensor@0 {
 				compatible = "google,lwis-i2c-device";
 
 				/* Device node name */
-				node-name = "sensor-boitata";
+				node-name = "sensor-oksoko";
 
 				/* I2C */
 				i2c-bus = <&hsi2c_1>;
-				i2c-addr = <0x3D>;
+				i2c-addr = <0x1A>;
 
 				/* Registers */
 				reg-addr-bitwidth = <16>;
-				reg-value-bitwidth = <16>;
+				reg-value-bitwidth = <8>;
 				/* CAMS_LVBUCK_EN for ldo8 */
 				enable-gpios = <&s2mpg15_gpio 2 GPIO_ACTIVE_HIGH>;
 
@@ -219,6 +219,8 @@
 				ldo1-supply = <&slg51002_ldo1>;
 				ldo8-supply = <&slg51002_ldo8>;
 				ldo4-supply = <&slg51002_ldo4>;
+				ldo5-supply = <&slg51002_ldo5>;
+				ldo3-supply = <&slg51002_ldo3>;
 
 				clocks =
 					<&clock CIS_CLK3>,
@@ -238,10 +240,12 @@
 				/* Power up sequence */
 				power-up-seqs =
 					"enable",
-					"ldo8",
 					"s2mpg15_ldo12",
-					"ldo1",
+					"ldo5",
 					"ldo4",
+					"ldo1",
+					"ldo3",
+					"ldo8",
 					"reset",
 					"mclk_on";
 				power-up-seq-types =
@@ -250,14 +254,18 @@
 					"regulator",
 					"regulator",
 					"regulator",
+					"regulator",
+					"regulator",
 					"gpio",
 					"pinctrl";
 				power-up-seq-delays-us =
-					<500
+					<1000
+					 1000
 					 1000
 					 0
-					 0
-					 2000
+					 1000
+					 1000
+					 1000
 					 1000
 					 9000>;
 
@@ -265,10 +273,12 @@
 				power-down-seqs =
 					"mclk_off",
 					"reset",
-					"ldo4",
-					"ldo1",
-					"s2mpg15_ldo12",
 					"ldo8",
+					"ldo3",
+					"ldo1",
+					"ldo4",
+					"ldo5",
+					"s2mpg15_ldo12",
 					"enable";
 				power-down-seq-types =
 					"pinctrl",
@@ -277,14 +287,18 @@
 					"regulator",
 					"regulator",
 					"regulator",
+					"regulator",
+					"regulator",
 					"gpio";
 				power-down-seq-delays-us =
 					<1000
 					 1000
-					 0
-					 0
-					 0
-					 0
+					 1000
+					 1000
+					 1000
+					 1000
+					 1000
+					 1000
 					 0>;
 
 				/* Thread priority */
@@ -456,11 +470,11 @@
 				transaction-thread-priority = <99>;
 			};
 
-			/* EEPROM DJINN for BOITATA*/
+			/* EEPROM NESSIE for OKSOKO*/
 			eeprom0: eeprom@0 {
 				compatible = "google,lwis-i2c-device";
 				/* Device node name */
-				node-name = "eeprom-djinn";
+				node-name = "eeprom-nessie";
 				/* I2C */
 				i2c-bus = <&hsi2c_1>;
 				i2c-addr = <0x24>;
@@ -469,26 +483,33 @@
 				reg-value-bitwidth = <32>;
 				/* Power supplies */
 				s2mpg15_ldo12-supply = <&s_ldo12_reg>;
+				ldo4-supply = <&slg51002_ldo4>;
 				ldo5-supply = <&slg51002_ldo5>;
 				/* Power up sequence */
 				power-up-seqs =
 					"s2mpg15_ldo12",
-					"ldo5";
+					"ldo5",
+					"ldo4";
 				power-up-seq-types =
+					"regulator",
 					"regulator",
 					"regulator";
 				power-up-seq-delays-us =
 					<1000
+					 1000
 					 1000>;
 				/* Power down sequence */
 				power-down-seqs =
+					"ldo4",
 					"ldo5",
 					"s2mpg15_ldo12";
 				power-down-seq-types =
 					"regulator",
+					"regulator",
 					"regulator";
 				power-down-seq-delays-us =
 					<1000
+					 1000
 					 1000>;
 			};
 
@@ -562,46 +583,53 @@
 					<1000>;
 			};
 
-			/* Actuator CORNERFOLK for BOITATA */
+			/* Actuator NESSIE for OKSOKO */
 			actuator0: actuator@0 {
 				compatible = "google,lwis-i2c-device";
 
 				/* Device node name */
-				node-name = "act-cornerfolk";
+				node-name = "act-nessie";
 
 				/* I2C */
 				i2c-bus = <&hsi2c_1>;
-				i2c-addr = <0xC>;
+				i2c-addr = <0x24>;
 
 				/* Registers */
-				reg-addr-bitwidth = <8>;
-				reg-value-bitwidth = <8>;
+				reg-addr-bitwidth = <16>;
+				reg-value-bitwidth = <32>;
 
 				/* Power supplies */
 				s2mpg15_ldo12-supply = <&s_ldo12_reg>;
 				ldo4-supply = <&slg51002_ldo4>;
+				ldo5-supply = <&slg51002_ldo5>;
 
 				/* Power up sequence */
 				power-up-seqs =
 					"s2mpg15_ldo12",
+					"ldo5",
 					"ldo4";
 				power-up-seq-types =
 					"regulator",
+					"regulator",
 					"regulator";
 				power-up-seq-delays-us =
-					<0
-					 0>;
+					<1000
+					 1000
+					 1000>;
 
 				/* Power down sequence */
 				power-down-seqs =
 					"ldo4",
+					"ldo5",
 					"s2mpg15_ldo12";
 				power-down-seq-types =
 					"regulator",
+					"regulator",
 					"regulator";
 				power-down-seq-delays-us =
-					<0
-					 0>;
+					<1000
+					 1000
+					 1000>;
 
 				/* Thread priority */
 				periodic-io-thread-priority = <99>;
@@ -652,12 +680,12 @@
 				periodic-io-thread-priority = <99>;
 			};
 
-			/* OIS DJINN for BOITATA*/
+			/* OIS NESSIE for OKSOKO*/
 			ois0: ois@0 {
 				compatible = "google,lwis-i2c-device";
 
 				/* Device node name */
-				node-name = "ois-djinn";
+				node-name = "ois-nessie";
 
 				/* I2C */
 				i2c-bus = <&hsi2c_1>;
@@ -669,14 +697,14 @@
 
 				/* Power supplies */
 				s2mpg15_ldo12-supply = <&s_ldo12_reg>;
+				ldo4-supply = <&slg51002_ldo4>;
 				ldo5-supply = <&slg51002_ldo5>;
-				gpio4-supply = <&slg51002_gpio4>;
 
 				/* Power up sequence */
 				power-up-seqs =
 					"s2mpg15_ldo12",
 					"ldo5",
-					"gpio4";
+					"ldo4";
 				power-up-seq-types =
 					"regulator",
 					"regulator",
@@ -688,7 +716,7 @@
 
 				/* Power down sequence */
 				power-down-seqs =
-					"gpio4",
+					"ldo4",
 					"ldo5",
 					"s2mpg15_ldo12";
 				power-down-seq-types =
@@ -696,9 +724,9 @@
 					"regulator",
 					"regulator";
 				power-down-seq-delays-us =
-					<5000
-					 4000
-					 0>;
+					<1000
+					 1000
+					 1000>;
 
 				/* Thread priority */
 				periodic-io-thread-priority = <99>;
