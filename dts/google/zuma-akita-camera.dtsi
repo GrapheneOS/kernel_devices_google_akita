@@ -387,13 +387,12 @@
 				transaction-thread-priority = <99>;
 			};
 
-
-			/* REAR ULTRA WIDE CAMERA SANDWORM */
+			/* REAR ULTRA WIDE CAMERA LESHEN */
 			sensor2: sensor@2 {
 				compatible = "google,lwis-i2c-device";
 
 				/* Device node name */
-				node-name = "sensor-sandworm";
+				node-name = "sensor-leshen-uw";
 
 				/* I2C */
 				i2c-bus = <&hsi2c_3>;
@@ -429,41 +428,41 @@
 				/* Power up sequence */
 				power-up-seqs =
 					"s2mpg15_ldo12",
-					"ldo6",
 					"ldo2",
-					"mclk_on",
-					"reset";
+					"ldo6",
+					"reset",
+					"mclk_on";
 				power-up-seq-types =
 					"regulator",
 					"regulator",
 					"regulator",
-					"pinctrl",
-					"gpio";
+					"gpio",
+					"pinctrl";
 				power-up-seq-delays-us =
-					<0
-					 0
-					 0
+					<1000
+					 1000
+					 1000
 					 1000
 					 10000>;
 
 				/* Power down sequence */
 				power-down-seqs =
-					"reset",
 					"mclk_off",
-					"ldo2",
+					"reset",
 					"ldo6",
+					"ldo2",
 					"s2mpg15_ldo12";
 				power-down-seq-types =
-					"gpio",
 					"pinctrl",
+					"gpio",
 					"regulator",
 					"regulator",
 					"regulator";
 				power-down-seq-delays-us =
 					<1000
 					 1000
-					 0
-					 0
+					 1000
+					 1000
 					 1000>;
 
 				/* Thread priority */
@@ -548,12 +547,12 @@
 					<1000>;
 			};
 
-			/* EEPROM SMAUG for SANDWORM */
+			/* EEPROM SMAUG for LESHEN-UW */
 			eeprom2: eeprom@2 {
 				compatible = "google,lwis-i2c-device";
 
 				/* Device node name */
-				node-name = "eeprom-smaug-sandworm";
+				node-name = "eeprom-smaug-leshen-uw";
 
 				/* I2C */
 				i2c-bus = <&hsi2c_3>;
@@ -630,51 +629,6 @@
 					<1000
 					 1000
 					 1000>;
-
-				/* Thread priority */
-				periodic-io-thread-priority = <99>;
-			};
-
-			/* Actuator CORNERFOLK for SANDWORM */
-			actuator1: actuator@1 {
-				compatible = "google,lwis-i2c-device";
-
-				/* Device node name */
-				node-name = "act-cornerfolk-sandworm";
-
-				/* I2C */
-				i2c-bus = <&hsi2c_3>;
-				i2c-addr = <0xF>;
-
-				/* Registers */
-				reg-addr-bitwidth = <8>;
-				reg-value-bitwidth = <8>;
-
-				/* Power supplies */
-				s2mpg15_ldo12-supply = <&s_ldo12_reg>;
-				ldo4-supply = <&slg51002_ldo4>;
-
-				/* Power up sequence */
-				power-up-seqs =
-					"s2mpg15_ldo12",
-					"ldo4";
-				power-up-seq-types =
-					"regulator",
-					"regulator";
-				power-up-seq-delays-us =
-					<0
-					 0>;
-
-				/* Power down sequence */
-				power-down-seqs =
-					"ldo4",
-					"s2mpg15_ldo12";
-				power-down-seq-types =
-					"regulator",
-					"regulator";
-				power-down-seq-delays-us =
-					<0
-					 0>;
 
 				/* Thread priority */
 				periodic-io-thread-priority = <99>;
