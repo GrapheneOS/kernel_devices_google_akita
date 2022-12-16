@@ -13,6 +13,5 @@
 #include "zuma-akita-haptics.dtsi"
 #include "zuma-akita-touch.dtsi"
 #include "zuma-akita-thermal.dtsi"
-#include "zuma-akita-ldaf.dtsi"
 #include "zuma-akita-bluetooth.dtsi"
 #include "zuma-akita-pmic.dtsi"
