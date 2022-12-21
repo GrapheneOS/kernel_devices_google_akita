@@ -9,6 +9,7 @@
 /plugin/;
 
 #include "zuma-akita-common-dev1.dtsi"
+#include "../google-dts-base/zuma-cp-s5300-gnss.dtsi"
 
 / {
 	board_id = <0x40401>;
