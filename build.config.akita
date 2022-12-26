@@ -23,6 +23,7 @@ MKDTIMG_FLAGS="--page_size=4096 --id=/:board_id --rev=/:board_rev"
 MKDTIMG_DTBOS="
 ${DEVICE_REL_DIR}/dts/google/*.dtbo
 "
+BCMDHD=4383
 
 FILES="
 google-dts-base/zuma-a0.dtb
@@ -69,7 +70,7 @@ private/google-modules/touch/goodix
 private/google-modules/touch/sec
 private/google-modules/video/gchips
 private/google-modules/power/reset
-private/google-modules/wlan/bcm4398
+private/google-modules/wlan/bcm4383
 private/google-modules/bluetooth/broadcom
 private/google-modules/gps/broadcom/bcm47765
 "
