@@ -11,7 +11,8 @@ akita_overlays := \
 akita_dtbs := \
 	../google-dts-base/zuma-a0-foplp.dtb \
 	../google-dts-base/zuma-a0-ipop.dtb \
-	../google-dts-base/zuma-b0.dtb
+	../google-dts-base/zuma-b0-foplp.dtb \
+	../google-dts-base/zuma-b0-ipop.dtb
 
 # Usage:
 #   $(call DTBS_overlay_template, overlay, base_dtb, suffix)
