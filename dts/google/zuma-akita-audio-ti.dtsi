@@ -23,6 +23,7 @@
 };
 
 &aoc_snd_card {
+	aoc-card-name = "google,aoc-snd-card-ti";
 	clks {
 		sys {
 			sys@tas256x_lr {

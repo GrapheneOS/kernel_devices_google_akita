@@ -8,7 +8,7 @@
 /dts-v1/;
 /plugin/;
 
-#include "zuma-akita-common.dtsi"
+#include "zuma-akita-common-dev1.dtsi"
 #include "../google-dts-base/zuma-board-gps.dtsi"
 
 / {
