@@ -317,6 +317,7 @@ kernel_module(
         "drivers/trusty/trusty-virtio.ko",
         "drivers/tty/serial/exynos_tty.ko",
         "drivers/ufs/ufs-exynos-gs.ko",
+        "drivers/ufs/ufs-pixel-fips140.ko",
         "drivers/usb/dwc3/dwc3-exynos-usb.ko",
         "drivers/usb/gadget/function/usb_f_dm.ko",
         "drivers/usb/gadget/function/usb_f_dm1.ko",
