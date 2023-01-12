@@ -90,8 +90,10 @@ kernel_images(
 )
 
 _SOC_REVS = [
-    "a0",
-    "b0",
+    "a0-foplp",
+    "a0-ipop",
+    "b0-foplp",
+    "b0-ipop",
 ]
 
 _AKITA_DTBOS = [
