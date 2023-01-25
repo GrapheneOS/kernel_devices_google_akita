@@ -463,12 +463,3 @@ copy_to_dist_dir(
     flat = True,
     log = "info",
 )
-
-kernel_abi_dist(
-    name = "zuma_akita_abi_dist",
-    data = _zuma_akita_dist_targets,
-    dist_dir = "out/akita/dist",
-    flat = True,
-    kernel_abi = ":zuma_akita_abi",
-    log = "info",
-)
