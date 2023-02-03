@@ -4,9 +4,9 @@ akita_overlays := \
 	zuma-akita-dev1.dtbo \
 	zuma-akita-dev1-gnss.dtbo \
 	zuma-akita-proto1-A0-broadcom-gnss.dtbo \
-	zuma-akita-proto1-B1-broadcom-gnss.dtbo \
+	zuma-akita-proto1-B0-broadcom-gnss.dtbo \
 	zuma-akita-proto1-A0-lassen-gnss.dtbo \
-	zuma-akita-proto1-B1-lassen-gnss.dtbo
+	zuma-akita-proto1-B0-lassen-gnss.dtbo
 
 akita_dtbs := \
 	../google-dts-base/zuma-a0-foplp.dtb \

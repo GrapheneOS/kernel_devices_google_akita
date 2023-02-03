@@ -16,7 +16,7 @@
 	fragment@boardbase {
 		target-path = "/";
 		__overlay__ {
-			model = "ZUMA AKITA Proto 1.0 Broadcom GNSS board based on ZUMA B1";
+			model = "ZUMA AKITA Proto 1.0 Broadcom GNSS board based on ZUMA B0";
 			compatible = "google,ZUMA AKITA", "google,ZUMA";
 		};
 	};
