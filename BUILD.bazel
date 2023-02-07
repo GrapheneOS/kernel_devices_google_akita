@@ -92,6 +92,9 @@ _SOC_REVS = [
 _AKITA_DTBOS = [
     # Sync with build.config.akita
     "google/zuma-akita-dev1.dtbo",
+    "google-dts-base/zuma-dpm-eng.dtbo",
+    "google-dts-base/zuma-dpm-user.dtbo",
+    "google-dts-base/zuma-dpm-userdebug.dtbo",
 ]
 
 kernel_module_group(
@@ -159,14 +162,13 @@ kernel_build(
     outs = [
         "google-dts-base/zuma-{}.dtb".format(soc_rev)
         for soc_rev in _SOC_REVS
-    ],
+    ] + _AKITA_DTBOS,
     # TODO(b/221278445): Use real GKI
     # base_kernel = "//{}:kernel_aarch64".format(_GKI_KERNEL_DIR),
     base_kernel = ":akita_gki",
     build_config = ":device_build_config",
     collect_unstripped_modules = True,
     dtstree = "//private/devices/google/akita/dts:akita.dt",
-    implicit_outs = _AKITA_DTBOS,
     kconfig_ext = "//private/google-modules/soc/gs:Kconfig.ext",
     kmi_symbol_list = "//{}:android/abi_gki_aarch64_pixel".format(_GKI_KERNEL_DIR),
     module_outs = [

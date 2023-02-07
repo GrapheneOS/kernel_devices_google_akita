@@ -8,6 +8,16 @@ akita_overlays := \
 	zuma-akita-proto1-A0-lassen-gnss.dtbo \
 	zuma-akita-proto1-B0-lassen-gnss.dtbo
 
+# DPM overlays
+akita_overlays += \
+	../google-dts-base/zuma-dpm-eng.dtbo \
+	../google-dts-base/zuma-dpm-userdebug.dtbo \
+	../google-dts-base/zuma-dpm-user.dtbo
+
+DTC_FLAGS_zuma-dpm-eng += -a 4096
+DTC_FLAGS_zuma-dpm-user += -a 4096
+DTC_FLAGS_zuma-dpm-userdebug += -a 4096
+
 akita_dtbs := \
 	../google-dts-base/zuma-a0-foplp.dtb \
 	../google-dts-base/zuma-a0-ipop.dtb \
