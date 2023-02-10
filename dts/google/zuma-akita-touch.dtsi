@@ -17,7 +17,7 @@
 
 &spitouch {
 	status = "ok";
-	compatible = "goodix,brl-d";
+	compatible = "goodix,nottingham";
 
 	spi-max-frequency = <10000000>;
 
@@ -35,13 +35,17 @@
 	goodix,udfps-y = <1717>;
 	goodix,sleep-enable;
 
-	goodix,panel_map = <&google_ak3a 0>;
+	goodix,panel_map = <&google_ak3a 0>,
+			<&google_ak3b 1>;
 
-	goodix,firmware_names = "goodix_firmware_ak3a.bin";
+	goodix,firmware_names = "goodix_firmware_ak3a.bin",
+				"goodix_firmware_ak3b.bin";
 
-	goodix,config_names = "goodix_cfg_group_ak3a.bin";
+	goodix,config_names = "goodix_cfg_group_ak3a.bin",
+				"goodix_cfg_group_ak3b.bin";
 
-	goodix,test_limits_names = "goodix_test_limits_ak3a.csv";
+	goodix,test_limits_names = "goodix_test_limits_ak3a.csv",
+				"goodix_test_limits_ak3b.csv";
 
 	goog,touch_offload_id = /bits/ 8 <'a' 'k' '3' '0'>;
 	goog,display-resolution = /bits/ 16 <1080 2400>;
