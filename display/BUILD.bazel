@@ -15,6 +15,7 @@ kernel_module(
     outs = [
         # keep sorted
         "panel-google-ak3a.ko",
+        "panel-google-ak3b.ko",
     ],
     kernel_build = "//private/google-modules/soc/gs:gs_kernel_build",
     visibility = [
