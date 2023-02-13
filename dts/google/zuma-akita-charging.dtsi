@@ -33,6 +33,7 @@
 					<4599000 4340000 4040000 3676000 2795000 2340000 2053000 1686000 1441000  957000  597000  352000>;
 				google,wlc-thermal-mitigation-budgets =
 					<4599000 4040000 3676000 3153000 2795000 2340000 2053000 1686000 1441000  957000  597000  352000>;
+				google,therm-wlc-overrides-fcc;
 				google,thermal-stats-lvl-map = <0 3 5 8>;
 
 				google,wlc-thermal-dc-fan-alarm = <2>;
