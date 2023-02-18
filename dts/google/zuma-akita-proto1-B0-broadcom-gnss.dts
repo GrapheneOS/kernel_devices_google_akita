@@ -9,6 +9,7 @@
 /plugin/;
 
 #include "zuma-akita-common.dtsi"
+#include "../google-dts-base/zuma-board-gps.dtsi"
 
 / {
 	board_id = <0x40402>;
