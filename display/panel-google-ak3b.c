@@ -145,8 +145,8 @@ static const struct exynos_dsi_cmd ak3b_lhbm_location_cmds[] = {
 	EXYNOS_DSI_CMD_SEQ(0x6D, 0xCC),
 	/* global para */
 	EXYNOS_DSI_CMD_SEQ(0xB0, 0x00, 0x08, 0x6D),
-	/* center position set, x: 0x21C, y: 0x6B1, size: 0x63 */
-	EXYNOS_DSI_CMD_SEQ(0x6D, 0x21, 0xC6, 0xB1, 0x63),
+	/* center position set, x: 0x21C, y: 0x6B9, size: 0x63 */
+	EXYNOS_DSI_CMD_SEQ(0x6D, 0x21, 0xC6, 0xB9, 0x63),
 
 	/* test_key_off_f1 */
 	EXYNOS_DSI_CMD_SEQ(0xF1, 0xA5, 0xA5),
@@ -175,40 +175,34 @@ struct ak3b_panel {
 
 #define to_spanel(ctx) container_of(ctx, struct ak3b_panel, base)
 
+static void read_lhbm_gamma(struct exynos_panel *ctx, u8 *cmd, bool is_lp) {
+	struct mipi_dsi_device *dsi = to_mipi_dsi_device(ctx->dev);
+	u8 index = is_lp ? 0x18 : 0x22;
+	int ret;
+
+	EXYNOS_DCS_BUF_ADD_AND_FLUSH(ctx, 0xB0, 0x00, index, 0xD8); /* global para */
+	ret = mipi_dsi_dcs_read(dsi, 0xD8, cmd + 1, LHBM_GAMMA_CMD_SIZE - 1);
+
+	if (ret != (LHBM_GAMMA_CMD_SIZE - 1)) {
+		dev_err(ctx->dev, "fail to read LHBM gamma for %s\n", is_lp ? "AOD" : "HS");
+		return;
+	}
+
+	/* fill in gamma write command 0x66 in offset 0 */
+	cmd[0] = 0x66;
+	dev_dbg(ctx->dev, "%s_gamma: %*ph\n", is_lp ? "AOD" : "HS",
+		LHBM_GAMMA_CMD_SIZE - 1, cmd + 1);
+}
+
 static void ak3b_lhbm_gamma_read(struct exynos_panel *ctx)
 {
-	struct mipi_dsi_device *dsi = to_mipi_dsi_device(ctx->dev);
 	struct ak3b_panel *spanel = to_spanel(ctx);
-	int ret;
-	u8 *hs_cmd = spanel->local_hbm_gamma.hs_cmd;
-	u8 *aod_cmd = spanel->local_hbm_gamma.aod_cmd;
-	u8 buf[LHBM_GAMMA_CMD_SIZE * 2] = {0};
 
 	EXYNOS_DCS_BUF_ADD_SET(ctx, test_key_on_f0);
 
-	EXYNOS_DCS_BUF_ADD_AND_FLUSH(ctx, 0xB0, 0x00, 0x22, 0xD8); /* global para */
-	ret = mipi_dsi_dcs_read(dsi, 0xD8, hs_cmd + 1, LHBM_GAMMA_CMD_SIZE - 1);
-	if (ret == (LHBM_GAMMA_CMD_SIZE - 1)) {
-		/* fill in gamma write command 0x66 in offset 0 */
-		hs_cmd[0] = 0x66;
-		exynos_bin2hex(hs_cmd + 1, LHBM_GAMMA_CMD_SIZE - 1,
-			buf, sizeof(buf));
-		dev_info(ctx->dev, "%s: hs_gamma: %s\n", __func__, buf);
-	} else {
-		dev_err(ctx->dev, "fail to read LHBM gamma for HS\n");
-	}
+	read_lhbm_gamma(ctx, spanel->local_hbm_gamma.hs_cmd, false);
 
-	EXYNOS_DCS_WRITE_SEQ(ctx, 0xB0, 0x00, 0x18, 0xD8); /* global para */
-	ret = mipi_dsi_dcs_read(dsi, 0xD8, aod_cmd + 1, LHBM_GAMMA_CMD_SIZE - 1);
-	if (ret == (LHBM_GAMMA_CMD_SIZE - 1)) {
-		/* fill in gamma write command 0x66 in offset 0 */
-		aod_cmd[0] = 0x66;
-		exynos_bin2hex(aod_cmd + 1, LHBM_GAMMA_CMD_SIZE - 1,
-			buf, sizeof(buf));
-		dev_info(ctx->dev, "%s: aod_gamma: %s\n", __func__, buf);
-	} else {
-		dev_err(ctx->dev, "fail to read LHBM gamma for AOD\n");
-	}
+	read_lhbm_gamma(ctx, spanel->local_hbm_gamma.aod_cmd, true);
 
 	EXYNOS_DCS_BUF_ADD_SET_AND_FLUSH(ctx, test_key_off_f0);
 }
@@ -228,7 +222,12 @@ static void ak3b_lhbm_gamma_write(struct exynos_panel *ctx)
 	EXYNOS_DCS_BUF_ADD_SET(ctx, test_key_on_f0);
 
 	if (hs_cmd) {
+		/* HS120 */
 		EXYNOS_DCS_BUF_ADD(ctx, 0xB0, 0x03, 0xD7, 0x66); /* global para */
+		EXYNOS_DCS_BUF_ADD_SET(ctx, spanel->local_hbm_gamma.hs_cmd); /* write gamma */
+
+		/* HS60 */
+		EXYNOS_DCS_BUF_ADD(ctx, 0xB0, 0x03, 0xDC, 0x66); /* global para */
 		EXYNOS_DCS_BUF_ADD_SET(ctx, spanel->local_hbm_gamma.hs_cmd); /* write gamma */
 	}
 
@@ -735,6 +734,7 @@ const struct exynos_panel_desc google_ak3b = {
 	.lp_cmd_set = &ak3b_lp_cmd_set,
 	.binned_lp = ak3b_binned_lp,
 	.num_binned_lp = ARRAY_SIZE(ak3b_binned_lp),
+	.no_lhbm_rr_constraints = true,
 	.panel_func = &ak3b_drm_funcs,
 	.exynos_panel_func = &ak3b_exynos_funcs,
 };
