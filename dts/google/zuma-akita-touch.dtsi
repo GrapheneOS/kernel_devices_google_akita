@@ -34,15 +34,13 @@
 	goodix,udfps-x = <540>;
 	goodix,udfps-y = <1717>;
 	goodix,sleep-enable;
+	goodix,use-one-binary;
 
 	goodix,panel_map = <&google_ak3a 0>,
 			<&google_ak3b 1>;
 
 	goodix,firmware_names = "goodix_firmware_ak3a.bin",
 				"goodix_firmware_ak3b.bin";
-
-	goodix,config_names = "goodix_cfg_group_ak3a.bin",
-				"goodix_cfg_group_ak3b.bin";
 
 	goodix,test_limits_names = "goodix_test_limits_ak3a.csv",
 				"goodix_test_limits_ak3b.csv";
