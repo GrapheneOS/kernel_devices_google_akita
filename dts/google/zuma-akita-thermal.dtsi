@@ -108,7 +108,7 @@
 			};
 		};
 	};
-	display_therm {
+	inner_disp_therm {
 		polling-delay-passive = <0>;
 		polling-delay = <0>;
 		thermal-governor = "user_space";
