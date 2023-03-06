@@ -402,6 +402,7 @@ kernel_images(
     kernel_modules_install = ":zuma_akita_modules_install",
     # Keep the following in sync with build.config.akita:
     modules_list = ":vendor_kernel_boot_modules.akita-cat",
+    vendor_dlkm_etc_files = ["//private/devices/google/akita:insmod_cfgs"],
     vendor_dlkm_modules_blocklist = "//private/google-modules/soc/gs:vendor_dlkm.blocklist.zuma",
     # No MODULES_BLOCKLIST
     vendor_dlkm_modules_list = "//private/google-modules/soc/gs:vendor_dlkm_modules.zuma",
@@ -411,6 +412,13 @@ kernel_images(
         # selinux_fc
         "//prebuilts/boot-artifacts/selinux:file_contexts",
     ],
+)
+
+filegroup(
+    name = "insmod_cfgs",
+    srcs = glob([
+        "insmod_cfg/*.cfg",
+    ]),
 )
 
 # TODO: support running ufdt_apply_overlay in a loop on each DTBO
@@ -471,6 +479,7 @@ _zuma_akita_dist_targets = [
     # TODO: support running ufdt_apply_overlay in a loop on each DTBO
     #":zuma_akita_ufdt_overlay",
     ":zuma_akita_unstripped_modules_archive",
+    ":insmod_cfgs",
 ] + _GKI_MODULES
 
 copy_to_dist_dir(
