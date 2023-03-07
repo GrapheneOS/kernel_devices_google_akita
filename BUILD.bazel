@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 
+load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("//aosp-staging:modules.bzl", "COMMON_GKI_MODULES_LIST")
 load("//build/bazel_common_rules/dist:dist.bzl", "copy_to_dist_dir")
 load("//build/kernel/kleaf:constants.bzl", "aarch64_outs")
@@ -392,11 +393,30 @@ genrule(
     tools = ["//build/kernel:hermetic-tools/cat"],
 )
 
+_GKI_MODULES = [
+    # keep sorted
+    "lib/crypto/libarc4.ko",
+    "mm/zsmalloc.ko",
+    "net/ieee802154/ieee802154.ko",
+    "net/mac80211/mac80211.ko",
+    "net/mac802154/mac802154.ko",
+    "net/rfkill/rfkill.ko",
+    "net/wireless/cfg80211.ko",
+]
+
+write_file(
+    name = "system_dlkm_modules_list",
+    out = "system_dlkm_modules_list.akita",
+    content = _GKI_MODULES,
+)
+
 kernel_images(
     name = "zuma_akita_images",
+    base_kernel_images = ":akita_gki_images",
     build_boot = True,
     build_dtbo = True,
     build_initramfs = True,
+    build_system_dlkm = True,
     build_vendor_dlkm = True,
     build_vendor_kernel_boot = True,
     dtbo_srcs = [":zuma_akita/" + file for file in _AKITA_DTBOS],
@@ -404,6 +424,7 @@ kernel_images(
     kernel_modules_install = ":zuma_akita_modules_install",
     # Keep the following in sync with build.config.akita:
     modules_list = ":vendor_kernel_boot_modules.akita-cat",
+    system_dlkm_modules_list = ":system_dlkm_modules_list",
     vendor_dlkm_etc_files = ["//private/devices/google/akita:insmod_cfgs"],
     vendor_dlkm_modules_blocklist = "//private/google-modules/soc/gs:vendor_dlkm.blocklist.zuma",
     # No MODULES_BLOCKLIST
@@ -446,24 +467,12 @@ filegroup(
 #    ),
 #)
 
-_GKI_MODULES = [
-    # keep sorted
-    ":akita_gki/lib/crypto/libarc4.ko",
-    ":akita_gki/mm/zsmalloc.ko",
-    ":akita_gki/net/ieee802154/ieee802154.ko",
-    ":akita_gki/net/mac80211/mac80211.ko",
-    ":akita_gki/net/mac802154/mac802154.ko",
-    ":akita_gki/net/rfkill/rfkill.ko",
-    ":akita_gki/net/wireless/cfg80211.ko",
-]
-
 _zuma_akita_dist_targets = [
     # TODO(b/221278445) use real GKI; replace with //common:kernel_aarch64_additional_artifacts.
     # This will include abi.xml, abi_symbollist and abi_symbollist.report.
     ":akita_gki",
     "akita_gki_headers",
     "akita_gki_kmi_symbol_list",
-    "akita_gki_images",
     "//build/kernel:gki_certification_tools",
 
     # Device-specific artifacts
@@ -482,7 +491,7 @@ _zuma_akita_dist_targets = [
     #":zuma_akita_ufdt_overlay",
     ":zuma_akita_unstripped_modules_archive",
     ":insmod_cfgs",
-] + _GKI_MODULES
+] + [":akita_gki/{}".format(m) for m in _GKI_MODULES]
 
 copy_to_dist_dir(
     name = "zuma_akita_dist",
