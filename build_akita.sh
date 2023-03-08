@@ -8,9 +8,12 @@ function exit_if_error {
   fi
 }
 
+# Enable kleaf by default
+KLEAF=${KLEAF:-1}
+
 # Set KLEAF=1 to build with kleaf. This ignores all other command line options.
-if [ -n "${KLEAF}" ]; then
-  exec tools/bazel run --config=akita --config=fast //private/devices/google/akita:zuma_akita_dist
+if [ "${KLEAF}" = "1" ]; then
+  exec tools/bazel run --config=akita --config=fast //private/devices/google/akita:zuma_akita_dist "$@"
 fi
 
 cat <<- EOF
