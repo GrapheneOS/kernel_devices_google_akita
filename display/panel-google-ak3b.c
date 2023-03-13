@@ -515,30 +515,9 @@ static void ak3b_get_panel_rev(struct exynos_panel *ctx, u32 id)
 {
 	/* extract command 0xDB */
 	u8 build_code = (id & 0xFF00) >> 8;
-	u8 rev = build_code;
+	u8 rev = ((build_code & 0xE0) >> 3) | ((build_code & 0x0C) >> 2);
 
-	switch (rev) {
-	case 0x10:
-		ctx->panel_rev = PANEL_REV_PROTO1;
-		break;
-	case 0x20:
-		ctx->panel_rev = PANEL_REV_EVT1;
-		break;
-	case 0x40:
-		ctx->panel_rev = PANEL_REV_DVT1;
-		break;
-	case 0x80:
-		ctx->panel_rev = PANEL_REV_PVT;
-		break;
-	default:
-		dev_warn(ctx->dev,
-			 "unknown rev from panel (0x%x), default to latest\n",
-			 rev);
-		ctx->panel_rev = PANEL_REV_LATEST;
-		return;
-	}
-
-	dev_info(ctx->dev, "panel_rev: 0x%x, build id: 0x%x\n", ctx->panel_rev, rev);
+	exynos_panel_get_panel_rev(ctx, rev);
 }
 
 static int ak3b_panel_probe(struct mipi_dsi_device *dsi)
