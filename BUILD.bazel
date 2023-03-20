@@ -460,6 +460,7 @@ kernel_images(
     build_system_dlkm = True,
     build_vendor_dlkm = True,
     build_vendor_kernel_boot = True,
+    dedup_dlkm_modules = True,
     dtbo_srcs = [":zuma_akita/" + file for file in _AKITA_DTBOS],
     kernel_build = ":zuma_akita",
     kernel_modules_install = ":zuma_akita_modules_install",
