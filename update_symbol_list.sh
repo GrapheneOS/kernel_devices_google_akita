@@ -4,33 +4,22 @@
 # Copyright (C) Google LLC, 2022
 # Author: Will McVicker (willmcvicker@google.com)
 
-# Verify which core kernel we are using. Do this early to provide the kernel
-# directory in the usage message.
-if [[ "${TARGET}" =~ shusky ]]; then
-  BASE_KERNEL=$(bazel query 'labels(srcs, //private/devices/google/shusky:zuma_shusky)' 2>/dev/null | grep kernel_aarch64_sources)
-else
-  BASE_KERNEL=$(bazel query 'labels(srcs, //private/devices/google/akita:zuma_akita)' 2>/dev/null | grep kernel_aarch64_sources)
-fi
-if [[ "${BASE_KERNEL}" =~ aosp-staging ]]; then
-  KERNEL_DIR="aosp-staging/"
-else
-  KERNEL_DIR="aosp/"
-fi
+TARGET=
+FOR_AOSP_PUSH_BRANCH="update_symbol_list-delete-after-push"
+CONTINUE_AFTER_REBASE=0
+CHANGE_ID=
+BUG=
 
 function usage {
   ret="$1"
 
   echo "$0 --config TARGET [-p|--prepare-aosp-abi BUG_NUMBER] [--change-id CHANGE_ID] [--continue]"
   echo
-  echo "This script will update the symbol list in ${KERNEL_DIR}."
-  if [[ "${BASE_KERNEL}" =~ aosp-staging ]]; then
-    echo "If --commit is used, then, it will cherry-pick the symbol"
-    echo "list patch to aosp/ and rebase it to the ToT."
-  fi
+  echo "This script will update the pixel symbol list."
   echo
   echo " The following arguments are supported:"
-  echo "  --config (shusky|akita)              Specifies which target to build."
-  echo "  -p | --prepare-aosp-abi BUG_NUMBER   Update the AOSP ABI xml and symbol list in ${KERNEL_DIR}/"
+  echo "  --config <device-name>               Specifies which target to build."
+  echo "  -p | --prepare-aosp-abi BUG_NUMBER   Update the AOSP ABI xml and symbol list."
   echo "                                       and create a commit with the provided BUG_NUMBER."
   echo "  -c | --continue                      Continue after the rebase failure."
   echo "  --change-id CHANGE_ID                Use this Change-Id when creating the commit."
@@ -51,6 +40,57 @@ function exit_if_error {
     exit $1
   fi
 }
+
+
+while [[ $# -gt 0 ]]; do
+  next="$1"
+  case ${next} in
+  --config)
+    TARGET="$2"
+    shift
+    ;;
+  -p|--prepare-aosp-abi|--commit)
+    BUG="$2"
+    if ! [[ "${BUG}" =~ ^[0-9]+$ ]]; then
+      exit_if_error 1 "Bug numbers should be digits."
+    fi
+    shift
+    ;;
+  -c|--continue)
+    CONTINUE_AFTER_REBASE=1
+    ;;
+  --change-id)
+    CHANGE_ID="$2"
+    if ! [[ "${CHANGE_ID}" =~ ^I[0-9a-f]{40}$ ]]; then
+      exit_if_error 1 \
+        "Invalid Change-Id. Make sure it starts with 'I' followed by 40 hex characters"
+    fi
+    shift
+    ;;
+  -h|--help)
+    usage 0
+    ;;
+  *)
+    echo "Invalid argument $1"
+    usage 1
+    ;;
+  esac
+  shift
+done
+
+# Enforce the target selection. Needs to be run at the repo root
+if [[ -z "${TARGET}" ]] || [[ ! -d "private/devices/google/${TARGET}" ]]; then
+  echo "Invalid target: ${TARGET}"
+  usage 1
+fi
+
+BASE_KERNEL=$(bazel query 'labels(srcs, //private/devices/google/${TARGET}:zuma_${TARGET})' 2>/dev/null | grep kernel_aarch64_sources)
+if [[ "${BASE_KERNEL}" =~ aosp-staging ]]; then
+  KERNEL_DIR="aosp-staging/"
+else
+  KERNEL_DIR="aosp/"
+fi
+
 
 function verify_aosp_tree {
   pushd aosp >/dev/null
@@ -223,58 +263,6 @@ function update_aosp_to_tot {
   fi
 }
 
-TARGET=
-FOR_AOSP_PUSH_BRANCH="update_symbol_list-delete-after-push"
-CONTINUE_AFTER_REBASE=0
-CHANGE_ID=
-BUG=
-
-while [[ $# -gt 0 ]]; do
-  next="$1"
-  case ${next} in
-  --config)
-    TARGET="$2"
-    shift
-    ;;
-  -p|--prepare-aosp-abi|--commit)
-    BUG="$2"
-    if ! [[ "${BUG}" =~ ^[0-9]+$ ]]; then
-      exit_if_error 1 "Bug numbers should be digits."
-    fi
-    shift
-    ;;
-  -c|--continue)
-    CONTINUE_AFTER_REBASE=1
-    ;;
-  --change-id)
-    CHANGE_ID="$2"
-    if ! [[ "${CHANGE_ID}" =~ ^I[0-9a-f]{40}$ ]]; then
-      exit_if_error 1 \
-        "Invalid Change-Id. Make sure it starts with 'I' followed by 40 hex characters"
-    fi
-    shift
-    ;;
-  -h|--help)
-    usage 0
-    ;;
-  *)
-    echo "Invalid argument $1"
-    usage 1
-    ;;
-  esac
-  shift
-done
-
-# Enforce the target selection
-if [[ "${TARGET}" =~ shusky ]]; then
-  TARGET="shusky"
-elif [[ "${TARGET}" =~ akita ]]; then
-  TARGET="akita"
-else
-  echo "Only shusky and akita are currently supported."
-  echo
-  usage 1
-fi
 
 # Verify the aosp tree is in a good state before compiling anything
 verify_aosp_tree
