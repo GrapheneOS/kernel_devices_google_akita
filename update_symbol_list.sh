@@ -20,7 +20,7 @@ fi
 function usage {
   ret="$1"
 
-  echo "$0 --config TARGET [--commit BUG_NUMBER] [--change-id CHANGE_ID] [--continue]"
+  echo "$0 --config TARGET [-p|--prepare-aosp-abi BUG_NUMBER] [--change-id CHANGE_ID] [--continue]"
   echo
   echo "This script will update the symbol list in ${KERNEL_DIR}."
   if [[ "${BASE_KERNEL}" =~ aosp-staging ]]; then
@@ -29,10 +29,12 @@ function usage {
   fi
   echo
   echo " The following arguments are supported:"
-  echo "  --config (shusky|akita)   Specifies which target to build."
-  echo "  --commit BUG_NUMBER       Commit the symbol list."
-  echo "  --change-id CHANGE_ID     Use this Change-Id when creating the commit."
-  echo "  --continue                Continue after the rebase failure."
+  echo "  --config (shusky|akita)              Specifies which target to build."
+  echo "  -p | --prepare-aosp-abi BUG_NUMBER   Update the AOSP ABI xml and symbol list in ${KERNEL_DIR}/"
+  echo "                                       and create a commit with the provided BUG_NUMBER."
+  echo "  -c | --continue                      Continue after the rebase failure."
+  echo "  --change-id CHANGE_ID                Use this Change-Id when creating the commit."
+  echo "  --commit BUG_NUMBER                  [DEPRECATED to keep same flag as 5.10] same as -p|--prepare-aosp-abi"
   exit ${ret}
 }
 
@@ -234,14 +236,14 @@ while [[ $# -gt 0 ]]; do
     TARGET="$2"
     shift
     ;;
-  --commit)
+  -p|--prepare-aosp-abi|--commit)
     BUG="$2"
     if ! [[ "${BUG}" =~ ^[0-9]+$ ]]; then
       exit_if_error 1 "Bug numbers should be digits."
     fi
     shift
     ;;
-  --continue)
+  -c|--continue)
     CONTINUE_AFTER_REBASE=1
     ;;
   --change-id)
