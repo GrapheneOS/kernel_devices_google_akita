@@ -146,27 +146,15 @@ function commit_the_symbol_list {
   echo >> ${COMMIT_TEXT}
   if [ -n "${ADDING}" ]; then
     echo "Adding the following symbols:" >> ${COMMIT_TEXT}
-    i=0
     for s in ${ADDING}; do
       echo "  - $s" >> ${COMMIT_TEXT}
-      i=$((i+1))
-      if [[ $i -gt 10 ]]; then
-        echo "  ...(not showing all symbols)" >> ${COMMIT_TEXT}
-        break
-      fi
     done
     echo >> ${COMMIT_TEXT}
   fi
   if [ -n "${REMOVING}" ]; then
     echo "Removing the following symbols:" >> ${COMMIT_TEXT}
-    i=0
     for s in ${REMOVING}; do
       echo "  - $s" >> ${COMMIT_TEXT}
-      i=$((i+1))
-      if [[ $i -gt 10 ]]; then
-        echo "  ...(not showing all symbols)" >> ${COMMIT_TEXT}
-        break
-      fi
     done
     echo >> ${COMMIT_TEXT}
   fi
