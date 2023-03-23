@@ -106,16 +106,24 @@ function print_final_message {
   fi
 }
 
-# Cat the symbol lists together, sort and update them to all match
-# $1 The final symbol list (included in the list to sort)
-# $@ The symbol lists to sort and merge together
-function merge_and_sort_symbol_lists {
-  # Remove blank lines and comments. Then sort
+# Update the AOSP symbol list
+# $1 the base kernel
+# $2 the aosp kernel symbol list
+function apply_to_aosp_symbol_list {
   TMP_LIST=$(mktemp -t symbol_list.XXXX)
-  cat "$@" > ${TMP_LIST}
+  cp -f $2 ${TMP_LIST}
+
+  # Only apply the new symbol additions. This makes sure that we don't copy
+  # over any symbols that are only found in the aosp-staging branch.
+  git -C $1 show | grep "^+  " >> ${TMP_LIST}
+
+  # Remove leading plus signs from the `git show`
+  sed -i 's:^+  \(.\+\):  \1:g' ${TMP_LIST}
+
+  # Remove empty lines and comments
   sed -i '/^$/d' ${TMP_LIST}
   sed -i '/^#/d' ${TMP_LIST}
-  LC_ALL=en_US.utf8 sort -ubfi ${TMP_LIST} > $1
+  LC_ALL=en_US.utf8 sort -ubfi ${TMP_LIST} > $2
 
   rm -f ${TMP_LIST}
 }
@@ -168,7 +176,12 @@ function commit_the_symbol_list {
     echo "Change-Id: ${CHANGE_ID}" >> ${COMMIT_TEXT}
   fi
   git -C "${aosp_dir}" commit --quiet -s -F ${COMMIT_TEXT} -- "${pixel_symbol_list}"
-  echo "done.."
+  if [[ "$?" != 0 ]] && [[ ${aosp_dir} =~ aosp-staging ]]; then
+    rm -f ${COMMIT_TEXT}
+    echo "No symbol list changes detected in ${aosp_dir}."
+    exit 0
+  fi
+  echo "done..."
   rm -f ${COMMIT_TEXT}
 }
 
@@ -200,20 +213,20 @@ function update_aosp_to_tot {
   popd >/dev/null
 
   if [[ "${BASE_KERNEL}" =~ aosp-staging ]]; then
-    # Since we are using aosp-staging, we need to copy over the symbol list to
-    # the AOSP tree.
+    # Since we are using aosp-staging, we need to update the AOSP symbol list
+    # too.
     #
-    # First, rollback any symbol list changes in aosp/ and then merge the AOSP
-    # symbol list with the aosp-staging symbol list. This ensures that we only
-    # add symbols needed based on the current pixel changes.
+    # First, rollback any symbol list changes in aosp/ and then apply the
+    # aosp-staging symbol list diff to the aosp version of the pixel symbol
+    # list. This ensures that we only add symbols needed based on the current
+    # pixel changes.
     #
-    # Note: we are cat'ing the aosp-staing/ and ToT aosp/ symbol lists
-    # together. This retains all symbols in the ToT AOSP version of the pixel
-    # symbol list.
+    # Note: we are NOT copying over the aosp-staging/ symbol list to the aosp/
+    # symbol list in order to avoid pulling in symbols that only exist on the
+    # aosp-staging branch.
     git -C aosp show --quiet aosp/android14-5.15:"${pixel_symbol_list}" \
       > aosp/"${pixel_symbol_list}"
-    merge_and_sort_symbol_lists "aosp/${pixel_symbol_list}" \
-      "aosp-staging/${pixel_symbol_list}"
+    apply_to_aosp_symbol_list ${KERNEL_DIR} "aosp/${pixel_symbol_list}"
 
     # Create the AOSP symbol list commit
     commit_the_symbol_list "aosp"
