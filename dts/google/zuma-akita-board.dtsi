@@ -14,3 +14,4 @@
 #include "zuma-akita-usecases.dtsi"
 #include "zuma-akita-wcharger.dtsi"
 #include "zuma-akita-gsa-gsc.dtsi"
+#include "zuma-akita-wlan.dtsi"
