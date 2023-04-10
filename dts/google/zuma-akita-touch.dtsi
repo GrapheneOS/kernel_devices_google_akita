@@ -62,7 +62,7 @@
 };
 
 &m_ldo4_reg {
-	regulator-min-microvolt = <3300000>;
-	regulator-max-microvolt = <3300000>;
+	regulator-min-microvolt = <3000000>;
+	regulator-max-microvolt = <3000000>;
 	/delete-property/ regulator-always-on;
 };
