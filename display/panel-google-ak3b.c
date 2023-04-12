@@ -168,7 +168,8 @@ struct ak3b_panel {
 
 	/** @local_hbm_gamma: lhbm gamma data */
 	struct local_hbm_gamma {
-		u8 hs_cmd[LHBM_GAMMA_CMD_SIZE];
+		u8 hs120_cmd[LHBM_GAMMA_CMD_SIZE];
+		u8 hs60_cmd[LHBM_GAMMA_CMD_SIZE];
 		u8 aod_cmd[LHBM_GAMMA_CMD_SIZE];
 	} local_hbm_gamma;
 };
@@ -200,9 +201,13 @@ static void ak3b_lhbm_gamma_read(struct exynos_panel *ctx)
 
 	EXYNOS_DCS_BUF_ADD_SET(ctx, test_key_on_f0);
 
-	read_lhbm_gamma(ctx, spanel->local_hbm_gamma.hs_cmd, false);
+	read_lhbm_gamma(ctx, spanel->local_hbm_gamma.hs120_cmd, false);
 
-	read_lhbm_gamma(ctx, spanel->local_hbm_gamma.aod_cmd, true);
+	if (ctx->panel_rev == PANEL_REV_PROTO1) {
+		read_lhbm_gamma(ctx, spanel->local_hbm_gamma.aod_cmd, true);
+	} else {
+		read_lhbm_gamma(ctx, spanel->local_hbm_gamma.hs60_cmd, true);
+	}
 
 	EXYNOS_DCS_BUF_ADD_SET_AND_FLUSH(ctx, test_key_off_f0);
 }
@@ -210,10 +215,11 @@ static void ak3b_lhbm_gamma_read(struct exynos_panel *ctx)
 static void ak3b_lhbm_gamma_write(struct exynos_panel *ctx)
 {
 	struct ak3b_panel *spanel = to_spanel(ctx);
-	const u8 hs_cmd = spanel->local_hbm_gamma.hs_cmd[0];
+	const u8 hs120_cmd = spanel->local_hbm_gamma.hs120_cmd[0];
+	const u8 hs60_cmd = spanel->local_hbm_gamma.hs60_cmd[0];
 	const u8 aod_cmd = spanel->local_hbm_gamma.aod_cmd[0];
 
-	if (!hs_cmd && !aod_cmd) {
+	if (!hs120_cmd && !hs60_cmd && !aod_cmd) {
 		dev_err(ctx->dev, "%s: no lhbm gamma!\n", __func__);
 		return;
 	}
@@ -221,14 +227,22 @@ static void ak3b_lhbm_gamma_write(struct exynos_panel *ctx)
 	dev_dbg(ctx->dev, "%s\n", __func__);
 	EXYNOS_DCS_BUF_ADD_SET(ctx, test_key_on_f0);
 
-	if (hs_cmd) {
+	if (hs120_cmd) {
 		/* HS120 */
 		EXYNOS_DCS_BUF_ADD(ctx, 0xB0, 0x03, 0xD7, 0x66); /* global para */
-		EXYNOS_DCS_BUF_ADD_SET(ctx, spanel->local_hbm_gamma.hs_cmd); /* write gamma */
+		EXYNOS_DCS_BUF_ADD_SET(ctx, spanel->local_hbm_gamma.hs120_cmd); /* write gamma */
 
 		/* HS60 */
+		if (ctx->panel_rev == PANEL_REV_PROTO1) {
+			EXYNOS_DCS_BUF_ADD(ctx, 0xB0, 0x03, 0xDC, 0x66); /* global para */
+			EXYNOS_DCS_BUF_ADD_SET(ctx,
+				spanel->local_hbm_gamma.hs120_cmd); /* write gamma */
+		}
+	}
+
+	if (hs60_cmd) {
 		EXYNOS_DCS_BUF_ADD(ctx, 0xB0, 0x03, 0xDC, 0x66); /* global para */
-		EXYNOS_DCS_BUF_ADD_SET(ctx, spanel->local_hbm_gamma.hs_cmd); /* write gamma */
+		EXYNOS_DCS_BUF_ADD_SET(ctx, spanel->local_hbm_gamma.hs60_cmd); /* write gamma */
 	}
 
 	if (aod_cmd) {
@@ -338,6 +352,7 @@ static void ak3b_change_frequency(struct exynos_panel *ctx,
 
 static void ak3b_update_wrctrld(struct exynos_panel *ctx)
 {
+	u32 vrefresh = drm_mode_vrefresh(&ctx->current_mode->mode);
 	u8 val = AK3B_WRCTRLD_BCTRL_BIT;
 
 	if (IS_HBM_ON(ctx->hbm_mode))
@@ -355,7 +370,28 @@ static void ak3b_update_wrctrld(struct exynos_panel *ctx)
 		ctx->dimming_on ? "on" : "off",
 		ctx->hbm.local_hbm.enabled ? "on" : "off");
 
-	EXYNOS_DCS_WRITE_SEQ(ctx, MIPI_DCS_WRITE_CONTROL_DISPLAY, val);
+	if (ctx->panel_rev >= PANEL_REV_PROTO1_1) {
+		EXYNOS_DCS_BUF_ADD_SET(ctx, test_key_on_f0);
+		EXYNOS_DCS_BUF_ADD(ctx, 0xB0, 0x00, 0x01, 0xBD); /* global_para */
+
+		if (ctx->hbm.local_hbm.enabled) {
+			EXYNOS_DCS_BUF_ADD(ctx, 0xBD, 0x00, 0x01, 0x01, 0x01); /* pulse settings */
+		} else {
+			EXYNOS_DCS_BUF_ADD(ctx, 0xBD, 0x01, 0x03, 0x03, 0x03); /* pulse settings */
+			if (vrefresh == 120) {
+				/* HS120 */
+				EXYNOS_DCS_BUF_ADD(ctx, 0x60, 0x00, 0x00);
+			} else {
+				/* HS60 */
+				EXYNOS_DCS_BUF_ADD(ctx, 0x60, 0x08, 0x00);
+			}
+		}
+
+		EXYNOS_DCS_BUF_ADD_SET(ctx, freq_update);
+		EXYNOS_DCS_BUF_ADD_SET(ctx, test_key_off_f0);
+	}
+
+	EXYNOS_DCS_BUF_ADD_AND_FLUSH(ctx, MIPI_DCS_WRITE_CONTROL_DISPLAY, val);
 }
 
 #define MAX_BR_HBM 4095
