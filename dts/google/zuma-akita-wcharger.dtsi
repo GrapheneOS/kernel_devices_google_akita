@@ -71,6 +71,11 @@
 
 		idt,max_vout_mv = <10000>;  /* max voltage in mV */
 
+		google,q_value = <54>;
+		google,rf_value = <88>;
+		fod = [8D 34 82 32 95 18 8D 2A A4 F7 B1 CA 00 00 00 29];
+		fod_epp = [8B 4A 7C 51 93 13 8F 28 95 06 9F C8 00 00 00 29];
+
 		p9xxx_gpio: p9xxx_gpio {
 			gpio-controller;
 			#gpio-cells = <2>;
