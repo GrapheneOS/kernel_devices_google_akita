@@ -36,16 +36,19 @@
 	goodix,sleep-enable;
 	goodix,use-one-binary;
 
-	goodix,panel_map = <&google_ak3a 0>,
+	goog,panel_map = <&google_ak3a 0>,
 			<&google_ak3b 1>;
 
-	goodix,firmware_names = "goodix_firmware_ak3a.bin",
+	goog,firmware_names = "goodix_firmware_ak3a.bin",
 				"goodix_firmware_ak3b.bin";
 
-	goodix,test_limits_names = "goodix_test_limits_ak3a.csv",
+	goog,test_limits_names = "goodix_test_limits_ak3a.csv",
 				"goodix_test_limits_ak3b.csv";
 
-	goog,touch_offload_id = /bits/ 8 <'a' 'k' '3' '0'>;
+	goog,offload-enabled;
+	goog,offload-caps-scan-types = /bits/ 16 <0xC0>;
+	goog,offload-caps-context-channel-types = /bits/ 16 <0x0100>;
+	goog,touch_offload_ids = /bits/ 8 <'a' 'k' '3' '0' 'a' 'k' '3' '1'>;
 	goog,display-resolution = /bits/ 16 <1080 2400>;
 	goog,channel-num = /bits/ 16 <16 34>;
 
