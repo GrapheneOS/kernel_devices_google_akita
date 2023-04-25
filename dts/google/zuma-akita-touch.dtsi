@@ -46,6 +46,7 @@
 				"goodix_test_limits_ak3b.csv";
 
 	goog,offload-enabled;
+	goog,v4l2-enabled;
 	goog,offload-caps-scan-types = /bits/ 16 <0xC0>;
 	goog,offload-caps-context-channel-types = /bits/ 16 <0x0100>;
 	goog,touch_offload_ids = /bits/ 8 <'a' 'k' '3' '0' 'a' 'k' '3' '1'>;
