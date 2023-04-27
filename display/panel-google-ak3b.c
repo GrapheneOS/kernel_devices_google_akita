@@ -121,7 +121,7 @@ static const struct exynos_dsi_cmd ak3b_lp_high_cmds[] = {
 static const struct exynos_binned_lp ak3b_binned_lp[] = {
 	BINNED_LP_MODE("off", 0, ak3b_lp_off_cmds),
 	/* rising time = delay = 12, falling time = delay + width = 12 + 35 */
-	BINNED_LP_MODE_TIMING("low", 436, ak3b_lp_low_cmds, 12, 12 + 35), /* 10 nits */
+	BINNED_LP_MODE_TIMING("low", 813, ak3b_lp_low_cmds, 12, 12 + 35), /* 40 nits */
 	BINNED_LP_MODE_TIMING("high", 3175, ak3b_lp_high_cmds, 12, 12 + 35)
 };
 
