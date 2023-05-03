@@ -14,7 +14,7 @@
 #include <linux/of_platform.h>
 #include <video/mipi_display.h>
 
-#include "samsung/panel/panel-samsung-drv.h"
+#include "panel/panel-samsung-drv.h"
 
 static const unsigned char pps_setting[] = {
 	0x11, 0x00, 0x00, 0x89, 0x30, 0x80, 0x09, 0x60,
