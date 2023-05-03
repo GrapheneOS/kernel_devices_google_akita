@@ -63,6 +63,15 @@
 	status = "disabled";
 };
 
+&drmdp {
+	status = "okay";
+};
+
+&drmdecon2 {
+	status = "okay";
+	connector = <0x10>;	// DRM-DP
+};
+
 &m_ldo14_reg {
 	/delete-property/ regulator-always-on;
 };
