@@ -52,6 +52,7 @@
 	goog,touch_offload_ids = /bits/ 8 <'l' '1' '0' '0' 'a' 'k' '3' '0'>;
 	goog,display-resolution = /bits/ 16 <1080 2400>;
 	goog,channel-num = /bits/ 16 <16 34>;
+	goog,tbn-enabled;
 
 	controller-data {
 		samsung,spi-feedback-delay = <0>;
