@@ -16,4 +16,5 @@
 #include "zuma-akita-bluetooth.dtsi"
 #include "zuma-akita-pmic.dtsi"
 #include "zuma-akita-pcie.dtsi"
+#include "zuma-akita-bcl.dtsi"
 
