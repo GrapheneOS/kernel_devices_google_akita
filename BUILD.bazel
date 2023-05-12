@@ -105,6 +105,8 @@ _AKITA_DTBOS = [
     "google/zuma-akita-proto1_1-lassen-gnss-wingboard.dtbo",
     "google/zuma-akita-proto1_1-broadcom-gnss-sky.dtbo",
     "google/zuma-akita-proto1_1-lassen-gnss-sky.dtbo",
+    "google/zuma-akita-evt1-broadcom-gnss.dtbo",
+    "google/zuma-akita-evt1-lassen-gnss.dtbo",
     "google-dts-base/zuma-dpm-eng.dtbo",
     "google-dts-base/zuma-dpm-user.dtbo",
     "google-dts-base/zuma-dpm-userdebug.dtbo",

@@ -12,7 +12,9 @@ akita_overlays := \
 	zuma-akita-proto1_1-broadcom-gnss-wingboard.dtbo \
 	zuma-akita-proto1_1-lassen-gnss-wingboard.dtbo \
 	zuma-akita-proto1_1-broadcom-gnss-sky.dtbo \
-	zuma-akita-proto1_1-lassen-gnss-sky.dtbo
+	zuma-akita-proto1_1-lassen-gnss-sky.dtbo \
+	zuma-akita-evt1-broadcom-gnss.dtbo \
+	zuma-akita-evt1-lassen-gnss.dtbo
 
 # DPM overlays
 akita_overlays += \
