@@ -177,28 +177,47 @@ struct ak3b_panel {
 	struct local_hbm_gamma {
 		u8 hs120_cmd[LHBM_GAMMA_CMD_SIZE];
 		u8 hs60_cmd[LHBM_GAMMA_CMD_SIZE];
+		u8 ns_cmd[LHBM_GAMMA_CMD_SIZE];
 		u8 aod_cmd[LHBM_GAMMA_CMD_SIZE];
 	} local_hbm_gamma;
 };
 
 #define to_spanel(ctx) container_of(ctx, struct ak3b_panel, base)
 
-static void read_lhbm_gamma(struct exynos_panel *ctx, u8 *cmd, bool is_lp) {
+enum frequency { HS120, HS60, NS60, AOD };
+static const char* frequency_str[] = { "HS120", "HS60", "NS60", "AOD" };
+
+static u8 get_lhbm_read_cmd(struct exynos_panel *ctx, enum frequency freq) {
+	switch(freq) {
+	case HS120:
+		return 0x22;
+	case HS60:
+	case AOD:
+		return 0x18;
+	case NS60:
+		return 0x1D;
+	default:
+		dev_err(ctx->dev, "LHBM Gamma read for unknown frequency %d\n", freq);
+		return 0x22;
+	}
+}
+
+static void read_lhbm_gamma(struct exynos_panel *ctx, u8 *cmd, enum frequency freq) {
 	struct mipi_dsi_device *dsi = to_mipi_dsi_device(ctx->dev);
-	u8 index = is_lp ? 0x18 : 0x22;
+	u8 index = get_lhbm_read_cmd(ctx, freq);
 	int ret;
 
 	EXYNOS_DCS_BUF_ADD_AND_FLUSH(ctx, 0xB0, 0x00, index, 0xD8); /* global para */
 	ret = mipi_dsi_dcs_read(dsi, 0xD8, cmd + 1, LHBM_GAMMA_CMD_SIZE - 1);
 
 	if (ret != (LHBM_GAMMA_CMD_SIZE - 1)) {
-		dev_err(ctx->dev, "fail to read LHBM gamma for %s\n", is_lp ? "AOD" : "HS");
+		dev_err(ctx->dev, "fail to read LHBM gamma for %s\n", frequency_str[freq]);
 		return;
 	}
 
 	/* fill in gamma write command 0x66 in offset 0 */
 	cmd[0] = 0x66;
-	dev_dbg(ctx->dev, "%s_gamma: %*ph\n", is_lp ? "AOD" : "HS",
+	dev_dbg(ctx->dev, "%s_gamma: %*ph\n", frequency_str[freq],
 		LHBM_GAMMA_CMD_SIZE - 1, cmd + 1);
 }
 
@@ -208,12 +227,13 @@ static void ak3b_lhbm_gamma_read(struct exynos_panel *ctx)
 
 	EXYNOS_DCS_BUF_ADD_SET(ctx, test_key_on_f0);
 
-	read_lhbm_gamma(ctx, spanel->local_hbm_gamma.hs120_cmd, false);
+	read_lhbm_gamma(ctx, spanel->local_hbm_gamma.hs120_cmd, HS120);
+	read_lhbm_gamma(ctx, spanel->local_hbm_gamma.ns_cmd, NS60);
 
 	if (ctx->panel_rev == PANEL_REV_PROTO1) {
-		read_lhbm_gamma(ctx, spanel->local_hbm_gamma.aod_cmd, true);
+		read_lhbm_gamma(ctx, spanel->local_hbm_gamma.aod_cmd, AOD);
 	} else {
-		read_lhbm_gamma(ctx, spanel->local_hbm_gamma.hs60_cmd, true);
+		read_lhbm_gamma(ctx, spanel->local_hbm_gamma.hs60_cmd, HS60);
 	}
 
 	EXYNOS_DCS_BUF_ADD_SET_AND_FLUSH(ctx, test_key_off_f0);
@@ -224,9 +244,10 @@ static void ak3b_lhbm_gamma_write(struct exynos_panel *ctx)
 	struct ak3b_panel *spanel = to_spanel(ctx);
 	const u8 hs120_cmd = spanel->local_hbm_gamma.hs120_cmd[0];
 	const u8 hs60_cmd = spanel->local_hbm_gamma.hs60_cmd[0];
+	const u8 ns_cmd = spanel->local_hbm_gamma.ns_cmd[0];
 	const u8 aod_cmd = spanel->local_hbm_gamma.aod_cmd[0];
 
-	if (!hs120_cmd && !hs60_cmd && !aod_cmd) {
+	if (!hs120_cmd && !hs60_cmd && !ns_cmd && !aod_cmd) {
 		dev_err(ctx->dev, "%s: no lhbm gamma!\n", __func__);
 		return;
 	}
@@ -250,6 +271,11 @@ static void ak3b_lhbm_gamma_write(struct exynos_panel *ctx)
 	if (hs60_cmd) {
 		EXYNOS_DCS_BUF_ADD(ctx, 0xB0, 0x03, 0xDC, 0x66); /* global para */
 		EXYNOS_DCS_BUF_ADD_SET(ctx, spanel->local_hbm_gamma.hs60_cmd); /* write gamma */
+	}
+
+	if (ns_cmd) {
+		EXYNOS_DCS_BUF_ADD(ctx, 0xB0, 0x03, 0xE6, 0x66); /* global para */
+		EXYNOS_DCS_BUF_ADD_SET(ctx, spanel->local_hbm_gamma.ns_cmd); /* write gamma */
 	}
 
 	if (aod_cmd) {
@@ -357,9 +383,40 @@ static void ak3b_change_frequency(struct exynos_panel *ctx,
 	dev_dbg(ctx->dev, "%s: change to %uhz\n", __func__, vrefresh);
 }
 
+static void buf_add_frequency_select_cmd(struct exynos_panel *ctx) {
+	u32 vrefresh = drm_mode_vrefresh(&ctx->current_mode->mode);
+	/* NS60: 0x18, HS120: 0x00, HS60: 0x08 */
+	u8 index = 0x18;
+	if (ctx->op_hz != 60) {
+	    index = (vrefresh == 120) ? 0x00 : 0x08;
+	}
+
+	EXYNOS_DCS_BUF_ADD(ctx, 0x60, index, 0x00);
+}
+
+static int ak3b_set_op_hz(struct exynos_panel *ctx, unsigned int hz)
+{
+	const unsigned int vrefresh = drm_mode_vrefresh(&ctx->current_mode->mode);
+
+	if ((vrefresh > hz) || ((hz != 60) && (hz != 120))) {
+		dev_err(ctx->dev, "invalid op_hz=%u for vrefresh=%u\n",
+			hz, vrefresh);
+		return -EINVAL;
+	}
+
+	ctx->op_hz = hz;
+
+	EXYNOS_DCS_BUF_ADD_SET(ctx, test_key_on_f0);
+	buf_add_frequency_select_cmd(ctx);
+	EXYNOS_DCS_BUF_ADD_SET(ctx, freq_update);
+	EXYNOS_DCS_BUF_ADD_SET_AND_FLUSH(ctx, test_key_off_f0);
+
+	dev_info(ctx->dev, "set op_hz at %u\n", hz);
+	return 0;
+}
+
 static void ak3b_update_wrctrld(struct exynos_panel *ctx)
 {
-	u32 vrefresh = drm_mode_vrefresh(&ctx->current_mode->mode);
 	u8 val = AK3B_WRCTRLD_BCTRL_BIT;
 
 	if (IS_HBM_ON(ctx->hbm_mode))
@@ -385,13 +442,7 @@ static void ak3b_update_wrctrld(struct exynos_panel *ctx)
 			EXYNOS_DCS_BUF_ADD(ctx, 0xBD, 0x00, 0x01, 0x01, 0x01); /* pulse settings */
 		} else {
 			EXYNOS_DCS_BUF_ADD(ctx, 0xBD, 0x01, 0x03, 0x03, 0x03); /* pulse settings */
-			if (vrefresh == 120) {
-				/* HS120 */
-				EXYNOS_DCS_BUF_ADD(ctx, 0x60, 0x00, 0x00);
-			} else {
-				/* HS60 */
-				EXYNOS_DCS_BUF_ADD(ctx, 0x60, 0x08, 0x00);
-			}
+			buf_add_frequency_select_cmd(ctx);
 		}
 
 		EXYNOS_DCS_BUF_ADD_SET(ctx, freq_update);
@@ -571,6 +622,8 @@ static int ak3b_panel_probe(struct mipi_dsi_device *dsi)
 	if (!spanel)
 		return -ENOMEM;
 
+	spanel->base.op_hz = 120;
+
 	return exynos_panel_common_init(dsi, &spanel->base);
 }
 
@@ -702,6 +755,7 @@ static const struct exynos_panel_funcs ak3b_exynos_funcs = {
 	.get_te2_edges = exynos_panel_get_te2_edges,
 	.configure_te2_edges = exynos_panel_configure_te2_edges,
 	.update_te2 = ak3b_update_te2,
+	.set_op_hz = ak3b_set_op_hz,
 	.read_id = exynos_panel_read_ddic_id,
 };
 
