@@ -127,6 +127,13 @@ static const struct exynos_binned_lp ak3b_binned_lp[] = {
 
 static const struct exynos_dsi_cmd ak3b_init_cmds[] = {
 	EXYNOS_DSI_CMD_SEQ_DELAY(120, MIPI_DCS_EXIT_SLEEP_MODE),
+
+	/* Frequencey settings */
+	EXYNOS_DSI_CMD0_REV(test_key_on_f0, PANEL_REV_GE(PANEL_REV_PROTO1_1)),
+	EXYNOS_DSI_CMD_SEQ_REV(PANEL_REV_GE(PANEL_REV_PROTO1_1), 0x60, 0x08, 0x00), /* 60 hz HS */
+	EXYNOS_DSI_CMD_SEQ_REV(PANEL_REV_GE(PANEL_REV_PROTO1_1), 0xF7, 0x0F), /* freq_update */
+	EXYNOS_DSI_CMD0_REV(test_key_off_f0, PANEL_REV_GE(PANEL_REV_PROTO1_1)),
+
 	EXYNOS_DSI_CMD_SEQ(MIPI_DCS_SET_TEAR_ON, 0x00),
 	EXYNOS_DSI_CMD_SEQ(MIPI_DCS_SET_COLUMN_ADDRESS, 0x00, 0x00, 0x04, 0x37),
 	EXYNOS_DSI_CMD_SEQ(MIPI_DCS_SET_PAGE_ADDRESS, 0x00, 0x00, 0x09, 0x5F),
