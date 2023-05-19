@@ -5,16 +5,16 @@ akita_overlays := \
 	zuma-akita-dev1-gnss.dtbo \
 	zuma-akita-proto1-A0-broadcom-gnss.dtbo \
 	zuma-akita-proto1-B1-broadcom-gnss.dtbo \
-	zuma-akita-proto1-A0-lassen-gnss.dtbo \
-	zuma-akita-proto1-B1-lassen-gnss.dtbo \
+	zuma-akita-proto1-A0-samsung-gnss.dtbo \
+	zuma-akita-proto1-B1-samsung-gnss.dtbo \
 	zuma-akita-proto1_1-broadcom-gnss.dtbo \
-	zuma-akita-proto1_1-lassen-gnss.dtbo \
+	zuma-akita-proto1_1-samsung-gnss.dtbo \
 	zuma-akita-proto1_1-broadcom-gnss-wingboard.dtbo \
-	zuma-akita-proto1_1-lassen-gnss-wingboard.dtbo \
+	zuma-akita-proto1_1-samsung-gnss-wingboard.dtbo \
 	zuma-akita-proto1_1-broadcom-gnss-sky.dtbo \
-	zuma-akita-proto1_1-lassen-gnss-sky.dtbo \
+	zuma-akita-proto1_1-samsung-gnss-sky.dtbo \
 	zuma-akita-evt1-broadcom-gnss.dtbo \
-	zuma-akita-evt1-lassen-gnss.dtbo
+	zuma-akita-evt1-samsung-gnss.dtbo
 
 # DPM overlays
 akita_overlays += \
