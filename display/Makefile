@@ -10,7 +10,7 @@ EXTRA_CFLAGS += -I$(KERNEL_SRC)/../private/google-modules/display/samsung
 EXTRA_CFLAGS += -I$(KERNEL_SRC)/../private/google-modules/display/samsung/include/uapi
 EXTRA_CFLAGS += -Werror
 
-EXTRA_SYMBOLS += $(OUT_DIR)/../private/google-modules/display/Module.symvers
+EXTRA_SYMBOLS += $(OUT_DIR)/../private/google-modules/display/samsung/Module.symvers
 
 modules modules_install clean:
 	$(MAKE) -C $(KERNEL_SRC) M=$(M) W=1 \
