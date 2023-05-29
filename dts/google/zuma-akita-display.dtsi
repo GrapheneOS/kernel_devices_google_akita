@@ -35,6 +35,7 @@
 		reset-gpios = <&gpa6 0 GPIO_ACTIVE_HIGH>;
 		vci-supply = <&m_ldo14_reg>;
 		vddi-supply = <&s_bucka_reg>;
+		vddd-supply = <&m_ldo22_reg>;
 	};
 
 	google_ak3b: panel@1 {
@@ -47,6 +48,7 @@
 		reset-gpios = <&gpa6 0 GPIO_ACTIVE_HIGH>;
 		vci-supply = <&m_ldo14_reg>;
 		vddi-supply = <&s_bucka_reg>;
+		vddd-supply = <&m_ldo22_reg>;
 	};
 
 	panel@2 {
@@ -72,5 +74,9 @@
 };
 
 &m_ldo14_reg {
+	/delete-property/ regulator-always-on;
+};
+
+&m_ldo22_reg {
 	/delete-property/ regulator-always-on;
 };
