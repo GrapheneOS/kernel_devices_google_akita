@@ -107,6 +107,7 @@ filegroup(
     output_group = "boot_lz4",
 )
 
+# TODO(b/285605996): Use hermetic_genrule
 genrule(
     name = "gki_aarch64_boot",
     srcs = [":gki_aarch64_boot_lz4"],
@@ -439,6 +440,7 @@ kernel_unstripped_modules_archive(
     kernel_modules = [":akita_ext_modules"],
 )
 
+# TODO(b/285605996): Use hermetic_genrule
 genrule(
     name = "vendor_kernel_boot_modules.akita-cat",
     srcs = [
@@ -449,7 +451,6 @@ genrule(
     outs = [
         "vendor_kernel_boot_modules.concat",
     ],
-    # TODO(b/259274243): switch to using the hermetic-tools cat binary
     cmd = """
         cat $(location vendor_kernel_boot_modules.akita) \\
             $(location //private/google-modules/soc/gs:vendor_kernel_boot_modules.zuma) \\
