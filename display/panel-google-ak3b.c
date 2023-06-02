@@ -126,13 +126,24 @@ static const struct exynos_binned_lp ak3b_binned_lp[] = {
 };
 
 static const struct exynos_dsi_cmd ak3b_init_cmds[] = {
-	EXYNOS_DSI_CMD_SEQ_DELAY(120, MIPI_DCS_EXIT_SLEEP_MODE),
+	EXYNOS_DSI_CMD_SEQ_DELAY_REV(PANEL_REV_LT(PANEL_REV_EVT1), 120, MIPI_DCS_EXIT_SLEEP_MODE),
+
+	EXYNOS_DSI_CMD_SEQ_DELAY_REV(PANEL_REV_GE(PANEL_REV_EVT1), 10, MIPI_DCS_EXIT_SLEEP_MODE),
 
 	/* Frequencey settings */
-	EXYNOS_DSI_CMD0_REV(test_key_on_f0, PANEL_REV_GE(PANEL_REV_PROTO1_1)),
-	EXYNOS_DSI_CMD_SEQ_REV(PANEL_REV_GE(PANEL_REV_PROTO1_1), 0x60, 0x08, 0x00), /* 60 hz HS */
-	EXYNOS_DSI_CMD_SEQ_REV(PANEL_REV_GE(PANEL_REV_PROTO1_1), 0xF7, 0x0F), /* freq_update */
-	EXYNOS_DSI_CMD0_REV(test_key_off_f0, PANEL_REV_GE(PANEL_REV_PROTO1_1)),
+	EXYNOS_DSI_CMD0_REV(test_key_on_f0, PANEL_REV_PROTO1_1),
+	EXYNOS_DSI_CMD_SEQ_REV(PANEL_REV_PROTO1_1, 0x60, 0x08, 0x00), /* 60 hz HS */
+	EXYNOS_DSI_CMD0_REV(freq_update, PANEL_REV_PROTO1_1),
+	EXYNOS_DSI_CMD0_REV(test_key_off_f0, PANEL_REV_PROTO1_1),
+
+	/* GPO_DC Setting(HS 60Hz) */
+	EXYNOS_DSI_CMD0_REV(test_key_on_f0, PANEL_REV_GE(PANEL_REV_EVT1)),
+	EXYNOS_DSI_CMD_SEQ_REV(PANEL_REV_GE(PANEL_REV_EVT1),
+		0xB0, 0x00, 0x1F, 0xCB), /* Global para */
+	EXYNOS_DSI_CMD_SEQ_REV(PANEL_REV_GE(PANEL_REV_EVT1), 0xCB, 0xFF), /* GPO_DC Setting */
+	EXYNOS_DSI_CMD0_REV(freq_update, PANEL_REV_GE(PANEL_REV_EVT1)),
+	/* Delay 110 ms after sending GPO_DC settings */
+	EXYNOS_DSI_CMD_REV(test_key_off_f0, 110, PANEL_REV_GE(PANEL_REV_EVT1)),
 
 	EXYNOS_DSI_CMD_SEQ(MIPI_DCS_SET_TEAR_ON, 0x00),
 	EXYNOS_DSI_CMD_SEQ(MIPI_DCS_SET_COLUMN_ADDRESS, 0x00, 0x00, 0x04, 0x37),
@@ -360,6 +371,18 @@ static void ak3b_update_te2(struct exynos_panel *ctx)
 	EXYNOS_DCS_BUF_ADD_SET_AND_FLUSH(ctx, test_key_off_f0);
 }
 
+static enum frequency ak3b_get_frequency(struct exynos_panel *ctx)
+{
+	u32 vrefresh = drm_mode_vrefresh(&ctx->current_mode->mode);
+
+	if (ctx->current_mode->exynos_mode.is_lp_mode)
+		return AOD;
+	else if (vrefresh == 120)
+		return HS120;
+
+	return ctx->op_hz == 60 ? NS60 : HS60;
+}
+
 static void ak3b_change_frequency(struct exynos_panel *ctx,
 				    const unsigned int vrefresh)
 {
@@ -418,6 +441,7 @@ static int ak3b_set_op_hz(struct exynos_panel *ctx, unsigned int hz)
 static void ak3b_update_wrctrld(struct exynos_panel *ctx)
 {
 	u8 val = AK3B_WRCTRLD_BCTRL_BIT;
+	enum frequency freq = ak3b_get_frequency(ctx);
 
 	if (IS_HBM_ON(ctx->hbm_mode))
 		val |= AK3B_WRCTRLD_HBM_BIT;
@@ -434,14 +458,36 @@ static void ak3b_update_wrctrld(struct exynos_panel *ctx)
 		ctx->dimming_on ? "on" : "off",
 		ctx->hbm.local_hbm.enabled ? "on" : "off");
 
+	/* pulse settings */
 	if (ctx->panel_rev >= PANEL_REV_PROTO1_1) {
 		EXYNOS_DCS_BUF_ADD_SET(ctx, test_key_on_f0);
-		EXYNOS_DCS_BUF_ADD(ctx, 0xB0, 0x00, 0x01, 0xBD); /* global_para */
 
+		if (ctx->panel_rev >= PANEL_REV_EVT1) {
+			EXYNOS_DCS_BUF_ADD(ctx, 0xB0, 0x00, 0x0B, 0xF2);
+
+			if (ctx->hbm.local_hbm.enabled && freq == HS60)
+				EXYNOS_DCS_BUF_ADD(ctx, 0xF2, 0x0C, 0x09, 0xB4);
+			else
+				EXYNOS_DCS_BUF_ADD(ctx, 0xF2, 0x0C, 0x00, 0x24);
+		}
+
+		EXYNOS_DCS_BUF_ADD(ctx, 0xB0, 0x00, 0x01, 0xBD);
 		if (ctx->hbm.local_hbm.enabled) {
-			EXYNOS_DCS_BUF_ADD(ctx, 0xBD, 0x00, 0x01, 0x01, 0x01); /* pulse settings */
+			EXYNOS_DCS_BUF_ADD(ctx, 0xBD, 0x00, 0x01, 0x01, 0x01);
+			if (ctx->panel_rev >= PANEL_REV_EVT1) {
+				EXYNOS_DCS_BUF_ADD(ctx, 0xB0, 0x00, 0x2F, 0xBD);
+				EXYNOS_DCS_BUF_ADD(ctx, 0xBD, (freq == HS60 ? 0x00 : 0x02));
+			}
 		} else {
-			EXYNOS_DCS_BUF_ADD(ctx, 0xBD, 0x01, 0x03, 0x03, 0x03); /* pulse settings */
+			if (ctx->panel_rev >= PANEL_REV_EVT1) {
+				EXYNOS_DCS_BUF_ADD(ctx, 0xBD, 0x81, 0x01, 0x03, 0x03);
+				EXYNOS_DCS_BUF_ADD(ctx, 0xB0, 0x00, 0x2F, 0xBD);
+				/* HS 120Hz, HS 60Hz, NS 60Hz */
+				EXYNOS_DCS_BUF_ADD(ctx, 0xBD, 0x02);
+			} else {
+				EXYNOS_DCS_BUF_ADD(ctx, 0xBD, 0x01, 0x03, 0x03, 0x03);
+			}
+
 			buf_add_frequency_select_cmd(ctx);
 		}
 
