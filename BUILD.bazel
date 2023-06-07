@@ -112,6 +112,11 @@ genrule(
     cmd = "mv $< $@",
 )
 
+_PIXEL_MAKE_GOALS = [
+    "modules",
+    "dtbs",
+]
+
 _SOC_REVS = [
     "a0-foplp",
     "a0-ipop",
@@ -236,6 +241,7 @@ kernel_build(
         "net/wireless/cfg80211.ko",
     ],
     strip_modules = True,
+    make_goals = _PIXEL_MAKE_GOALS,
 )
 
 kernel_abi(
