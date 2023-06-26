@@ -379,6 +379,8 @@ static enum frequency ak3b_get_frequency(struct exynos_panel *ctx)
 		return AOD;
 	else if (vrefresh == 120)
 		return HS120;
+	else if (ctx->panel_rev <= PANEL_REV_PROTO1)
+		return HS60;
 
 	return ctx->op_hz == 60 ? NS60 : HS60;
 }
@@ -412,6 +414,8 @@ static void buf_add_frequency_select_cmd(struct exynos_panel *ctx) {
 	u8 index = 0x18;
 	if (ctx->op_hz != 60) {
 	    index = (vrefresh == 120) ? 0x00 : 0x08;
+	} else if (ctx->panel_rev <= PANEL_REV_PROTO1) {
+		index = 0x08; /* NS60 is treated HS60 for Proto 1.0 */
 	}
 
 	EXYNOS_DCS_BUF_ADD(ctx, 0x60, index, 0x00);
@@ -428,6 +432,12 @@ static int ak3b_set_op_hz(struct exynos_panel *ctx, unsigned int hz)
 	}
 
 	ctx->op_hz = hz;
+
+	if (ctx->panel_rev <= PANEL_REV_PROTO1) {
+		dev_info(ctx->dev, "Panel revision %d always operates at op_hz = 120\n",
+			ctx->panel_rev);
+		return 0;
+	}
 
 	EXYNOS_DCS_BUF_ADD_SET(ctx, test_key_on_f0);
 	buf_add_frequency_select_cmd(ctx);
