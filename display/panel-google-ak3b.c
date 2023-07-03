@@ -89,6 +89,17 @@ static const u8 test_key_on_f0[] = { 0xF0, 0x5A, 0x5A };
 static const u8 test_key_off_f0[] = { 0xF0, 0xA5, 0xA5 };
 static const u8 freq_update[] = { 0xF7, 0x0F };
 
+#define FREQUENCY_COUNT 3
+#define LHBM_BRIGHTNESS_INDEX_SIZE 4
+
+static const u8 lhbm_brightness_index[FREQUENCY_COUNT][LHBM_BRIGHTNESS_INDEX_SIZE] = {
+	{ 0xB0, 0x03, 0xD7, 0x66 }, /* HS120 */
+	{ 0xB0, 0x03, 0xDC, 0x66 }, /* HS60 */
+	{ 0xB0, 0x03, 0xE6, 0x66 }  /* NS60 */
+};
+
+static const u8 lhbm_brightness_reg = 0x66;
+
 static const struct exynos_dsi_cmd ak3b_off_cmds[] = {
 	EXYNOS_DSI_CMD_SEQ(MIPI_DCS_SET_DISPLAY_OFF),
 	EXYNOS_DSI_CMD_SEQ_DELAY(120, MIPI_DCS_ENTER_SLEEP_MODE), /* sleep in */
@@ -174,6 +185,62 @@ static const struct exynos_dsi_cmd ak3b_lhbm_location_cmds[] = {
 static DEFINE_EXYNOS_CMD_SET(ak3b_lhbm_location);
 
 #define LHBM_GAMMA_CMD_SIZE 6
+
+#define LHBM_RATIO_SIZE 3
+
+/**
+ * enum ak3b_lhbm_brt - local hbm brightness
+ * @LHBM_R_COARSE: red coarse
+ * @LHBM_GB_COARSE: green and blue coarse
+ * @LHBM_R_FINE: red fine
+ * @LHBM_G_FINE: green fine
+ * @LHBM_B_FINE: blue fine
+ * @LHBM_BRT_LEN: local hbm brightness array length
+ */
+enum ak3b_lhbm_brt {
+	LHBM_R_COARSE = 0,
+	LHBM_GB_COARSE,
+	LHBM_R_FINE,
+	LHBM_G_FINE,
+	LHBM_B_FINE,
+	LHBM_BRT_LEN
+};
+
+/**
+ * enum ak3b_lhbm_brt_overdrive_group - lhbm brightness overdrive group number
+ * @LHBM_OVERDRIVE_GRP_0_NIT: group number for 0 nit
+ * @LHBM_OVERDRIVE_GRP_6_NIT: group number for 0-6 nits
+ * @LHBM_OVERDRIVE_GRP_50_NIT: group number for 6-50 nits
+ * @LHBM_OVERDRIVE_GRP_300_NIT: group number for 50-300 nits
+ * @LHBM_OVERDRIVE_GRP_MAX: maximum group number
+ */
+enum ak3b_lhbm_brt_overdrive_group {
+	LHBM_OVERDRIVE_GRP_0_NIT = 0,
+	LHBM_OVERDRIVE_GRP_6_NIT,
+	LHBM_OVERDRIVE_GRP_50_NIT,
+	LHBM_OVERDRIVE_GRP_300_NIT,
+	LHBM_OVERDRIVE_GRP_MAX
+};
+
+/* actual ratio = value / (10^9) */
+u32 lhbm_rgb_ratio[LHBM_OVERDRIVE_GRP_MAX][LHBM_RATIO_SIZE] = {
+	{1072323183, 1066226349, 1072461770},
+	{1028055932, 1025725193, 1028108843},
+	{1023112911, 1021192812, 1023156500},
+	{1018876770, 1017326961, 1018911915},
+};
+
+struct ak3b_lhbm_ctl {
+	/** @brt_normal: normal LHBM brightness parameters */
+	u8 brt_normal[FREQUENCY_COUNT][LHBM_BRT_LEN];
+	/** @brt_overdrive: overdrive LHBM brightness parameters */
+	u8 brt_overdrive[FREQUENCY_COUNT][LHBM_OVERDRIVE_GRP_MAX][LHBM_BRT_LEN];
+	/** @overdrived: whether LHBM is overdrived */
+	bool overdrived;
+	/** @hist_roi_configured: whether LHBM histogram configuration is done */
+	bool hist_roi_configured;
+};
+
 /**
  * struct ak3b_panel - panel specific runtime info
  *
@@ -191,6 +258,9 @@ struct ak3b_panel {
 		u8 ns_cmd[LHBM_GAMMA_CMD_SIZE];
 		u8 aod_cmd[LHBM_GAMMA_CMD_SIZE];
 	} local_hbm_gamma;
+
+	/** @lhbm_ctl: lhbm brightness control */
+	struct ak3b_lhbm_ctl lhbm_ctl;
 };
 
 #define to_spanel(ctx) container_of(ctx, struct ak3b_panel, base)
@@ -448,6 +518,38 @@ static int ak3b_set_op_hz(struct exynos_panel *ctx, unsigned int hz)
 	return 0;
 }
 
+static void ak3b_update_lhbm_hist_config(struct exynos_panel *ctx)
+{
+	struct ak3b_panel *spanel = to_spanel(ctx);
+	struct ak3b_lhbm_ctl *ctl = &spanel->lhbm_ctl;
+	const struct exynos_panel_mode *pmode = ctx->current_mode;
+	const struct drm_display_mode *mode;
+
+	/* From b/270088287#comment1 lhbm center below the center of AA: 521, radius: 99 */
+	const int d = 521, r = 99;
+
+	if (ctl->hist_roi_configured)
+		return;
+
+	if (!pmode) {
+		dev_err(ctx->dev, "no current mode set\n");
+		return;
+	}
+	mode = &pmode->mode;
+	if (!exynos_drm_connector_set_lhbm_hist(&ctx->exynos_connector,
+		mode->hdisplay, mode->vdisplay, d, r)) {
+		ctl->hist_roi_configured = true;
+		dev_dbg(ctx->dev, "configure lhbm hist: %d %d %d %d\n",
+			mode->hdisplay, mode->vdisplay, d, r);
+	}
+}
+
+static int ak3b_atomic_check(struct exynos_panel *ctx, struct drm_atomic_state *state)
+{
+	ak3b_update_lhbm_hist_config(ctx);
+	return 0;
+}
+
 static void ak3b_update_wrctrld(struct exynos_panel *ctx)
 {
 	u8 val = AK3B_WRCTRLD_BCTRL_BIT;
@@ -558,6 +660,7 @@ static int ak3b_enable(struct drm_panel *panel)
 	const struct exynos_panel_mode *pmode = ctx->current_mode;
 	const struct drm_display_mode *mode;
 	struct drm_dsc_picture_parameter_set pps_payload;
+	struct ak3b_panel *spanel = to_spanel(ctx);
 
 	if (!pmode) {
 		dev_err(ctx->dev, "no current mode set\n");
@@ -590,6 +693,7 @@ static int ak3b_enable(struct drm_panel *panel)
 	else
 		EXYNOS_DCS_WRITE_SEQ(ctx, MIPI_DCS_SET_DISPLAY_ON); /* display on */
 
+	spanel->lhbm_ctl.hist_roi_configured = false;
 	return 0;
 }
 
@@ -616,6 +720,78 @@ static void ak3b_set_hbm_mode(struct exynos_panel *exynos_panel,
 		 IS_HBM_ON_IRC_OFF(exynos_panel->hbm_mode));
 }
 
+static void ak3b_set_local_hbm_brightness(struct exynos_panel *ctx, bool is_first_stage)
+{
+	struct ak3b_panel *spanel = to_spanel(ctx);
+	struct ak3b_lhbm_ctl *ctl = &spanel->lhbm_ctl;
+	const u8 *brt;
+	enum ak3b_lhbm_brt_overdrive_group group = LHBM_OVERDRIVE_GRP_MAX;
+	enum frequency freq = ak3b_get_frequency(ctx);
+	/* command uses one byte besides brightness */
+	static u8 cmd[LHBM_BRT_LEN + 1];
+	int i;
+
+	if (!is_local_hbm_post_enabling_supported(ctx))
+		return;
+
+	dev_info(ctx->dev, "set LHBM brightness at %s stage\n", is_first_stage ? "1st" : "2nd");
+	if (is_first_stage) {
+		u32 gray = exynos_drm_connector_get_lhbm_gray_level(&ctx->exynos_connector);
+		u32 dbv = exynos_panel_get_brightness(ctx);
+		u32 normal_dbv_max = ctx->desc->brt_capability->normal.level.max;
+		u32 normal_nit_max = ctx->desc->brt_capability->normal.nits.max;
+		u32 luma = 0;
+
+		if (gray < 15) {
+			group = LHBM_OVERDRIVE_GRP_0_NIT;
+		} else {
+			if (dbv <= normal_dbv_max)
+				luma = panel_cmn_calc_gamma_2_2_luminance(dbv, normal_dbv_max,
+				normal_nit_max);
+			else
+				luma = panel_cmn_calc_linear_luminance(dbv, 645, -1256);
+			luma = panel_cmn_calc_gamma_2_2_luminance(gray, 255, luma);
+
+			if (luma < 6)
+				group = LHBM_OVERDRIVE_GRP_6_NIT;
+			else if (luma < 50)
+				group = LHBM_OVERDRIVE_GRP_50_NIT;
+			else if (luma < 300)
+				group = LHBM_OVERDRIVE_GRP_300_NIT;
+			else
+				group = LHBM_OVERDRIVE_GRP_MAX;
+		}
+		dev_dbg(ctx->dev, "check LHBM overdrive condition | gray=%u dbv=%u luma=%u\n",
+			gray, dbv, luma);
+	}
+
+	if (group < LHBM_OVERDRIVE_GRP_MAX) {
+		brt = ctl->brt_overdrive[freq][group];
+		ctl->overdrived = true;
+	} else {
+		brt = ctl->brt_normal[freq];
+		ctl->overdrived = false;
+	}
+	cmd[0] = lhbm_brightness_reg;
+	for (i = 0; i < LHBM_BRT_LEN; i++)
+		cmd[i+1] = brt[i];
+	dev_dbg(ctx->dev, "set %s brightness: [%d] %*ph\n",
+		ctl->overdrived ? "overdrive" : "normal",
+		ctl->overdrived ? group : -1, LHBM_BRT_LEN, brt);
+	EXYNOS_DCS_BUF_ADD_SET(ctx, test_key_on_f0);
+	EXYNOS_DCS_BUF_ADD_SET(ctx, lhbm_brightness_index[freq]);
+	EXYNOS_DCS_BUF_ADD_SET(ctx, cmd);
+	EXYNOS_DCS_BUF_ADD_SET_AND_FLUSH(ctx, test_key_off_f0);
+}
+
+static void ak3b_set_local_hbm_mode_post(struct exynos_panel *ctx)
+{
+	const struct ak3b_panel *spanel = to_spanel(ctx);
+
+	if (spanel->lhbm_ctl.overdrived)
+		ak3b_set_local_hbm_brightness(ctx, false);
+}
+
 static void ak3b_set_dimming_on(struct exynos_panel *exynos_panel,
 				 bool dimming_on)
 {
@@ -634,6 +810,9 @@ static void ak3b_set_local_hbm_mode(struct exynos_panel *exynos_panel,
 				 bool local_hbm_en)
 {
 	ak3b_update_wrctrld(exynos_panel);
+
+	if (local_hbm_en)
+		ak3b_set_local_hbm_brightness(exynos_panel, true);
 }
 
 static void ak3b_mode_set(struct exynos_panel *ctx,
@@ -649,6 +828,80 @@ static bool ak3b_is_mode_seamless(const struct exynos_panel *ctx,
 	return drm_mode_equal_no_clocks(&ctx->current_mode->mode, &pmode->mode);
 }
 
+static void ak3b_calculate_lhbm_brightness(struct exynos_panel *ctx,
+	const u8 *p_norm, const u32 *rgb_ratio, u8 *out_norm)
+{
+	const u8 rgb_offset[3][2] = {
+		{LHBM_R_COARSE, LHBM_R_FINE},
+		{LHBM_GB_COARSE, LHBM_G_FINE},
+		{LHBM_GB_COARSE, LHBM_B_FINE}
+	};
+	u8 new_norm[LHBM_BRT_LEN] = {0};
+	u64 tmp;
+	int i;
+	u16 mask, shift;
+
+	if (!rgb_ratio)
+		return;
+
+	for (i = 0; i < LHBM_RGB_RATIO_SIZE ; i++) {
+		if (i % 2) {
+			mask = 0xf0;
+			shift = 4;
+		} else {
+			mask = 0x0f;
+			shift = 0;
+		}
+		tmp = ((p_norm[rgb_offset[i][0]] & mask) >> shift) << 8
+			| p_norm[rgb_offset[i][1]];
+		dev_dbg(ctx->dev, "%s: lhbm_gamma[%d] = %llu\n", __func__, i, tmp);
+		/* Round off and revert to original gamma value */
+		tmp = (tmp * rgb_ratio[i] + 500000000)/1000000000;
+		dev_dbg(ctx->dev, "%s: new lhbm_gamma[%d] = %llu\n", __func__, i, tmp);
+		new_norm[rgb_offset[i][0]] |= ((tmp & 0xff00) >> 8) << shift;
+		new_norm[rgb_offset[i][1]] |= tmp & 0xff;
+	}
+	memcpy(out_norm, new_norm, LHBM_BRT_LEN);
+	dev_info(ctx->dev, "p_norm(%*ph), new_norm(%*ph), rgb_ratio(%u %u %u)\n",
+		LHBM_BRT_LEN, p_norm,
+		LHBM_BRT_LEN, out_norm,
+		rgb_ratio[0], rgb_ratio[1], rgb_ratio[2]);
+}
+
+static void ak3b_lhbm_brightness_init(struct exynos_panel *ctx)
+{
+	struct mipi_dsi_device *dsi = to_mipi_dsi_device(ctx->dev);
+	struct ak3b_panel *spanel = to_spanel(ctx);
+	struct ak3b_lhbm_ctl *ctl = &spanel->lhbm_ctl;
+	int group, freq, ret;
+
+	for (freq = 0; freq < FREQUENCY_COUNT; freq++) {
+		EXYNOS_DCS_WRITE_TABLE(ctx, test_key_on_f0);
+		EXYNOS_DCS_WRITE_TABLE(ctx, lhbm_brightness_index[freq]);
+		ret = mipi_dsi_dcs_read(dsi, lhbm_brightness_reg,
+			ctl->brt_normal[freq], LHBM_BRT_LEN);
+		EXYNOS_DCS_WRITE_TABLE(ctx, test_key_off_f0);
+
+		if (ret != LHBM_BRT_LEN) {
+			dev_err(ctx->dev, "failed to read lhbm para for %s ret=%d\n",
+				frequency_str[freq], ret);
+			continue;
+		}
+
+		dev_info(ctx->dev, "lhbm normal brightness for %s: %*ph\n",
+			frequency_str[freq], LHBM_BRT_LEN, ctl->brt_normal[freq]);
+
+		for (group = 0; group < LHBM_OVERDRIVE_GRP_MAX; group++) {
+			ak3b_calculate_lhbm_brightness(ctx, ctl->brt_normal[freq],
+				lhbm_rgb_ratio[group], ctl->brt_overdrive[freq][group]);
+		}
+	}
+
+	print_hex_dump_debug("ak3b-od-brightness: ", DUMP_PREFIX_NONE,
+		16, 1,
+		ctl->brt_overdrive, sizeof(ctl->brt_overdrive), false);
+}
+
 static void ak3b_panel_init(struct exynos_panel *ctx)
 {
 	struct dentry *csroot = ctx->debugfs_cmdset_entry;
@@ -656,6 +909,8 @@ static void ak3b_panel_init(struct exynos_panel *ctx)
 	exynos_panel_debugfs_create_cmdset(ctx, csroot,
 					   &ak3b_init_cmd_set, "init");
 
+	/* LHBM overdrive init */
+	ak3b_lhbm_brightness_init(ctx);
 	exynos_panel_send_cmd_set(ctx, &ak3b_lhbm_location_cmd_set);
 	ak3b_lhbm_gamma_read(ctx);
 	ak3b_lhbm_gamma_write(ctx);
@@ -804,6 +1059,7 @@ static const struct exynos_panel_funcs ak3b_exynos_funcs = {
 	.set_hbm_mode = ak3b_set_hbm_mode,
 	.set_dimming_on = ak3b_set_dimming_on,
 	.set_local_hbm_mode = ak3b_set_local_hbm_mode,
+	.set_local_hbm_mode_post = ak3b_set_local_hbm_mode_post,
 	.is_mode_seamless = ak3b_is_mode_seamless,
 	.mode_set = ak3b_mode_set,
 	.panel_init = ak3b_panel_init,
@@ -813,6 +1069,7 @@ static const struct exynos_panel_funcs ak3b_exynos_funcs = {
 	.update_te2 = ak3b_update_te2,
 	.set_op_hz = ak3b_set_op_hz,
 	.read_id = exynos_panel_read_ddic_id,
+	.atomic_check = ak3b_atomic_check,
 };
 
 const struct brightness_capability ak3b_brightness_capability = {
@@ -869,6 +1126,8 @@ const struct exynos_panel_desc google_ak3b = {
 	.no_lhbm_rr_constraints = true,
 	.panel_func = &ak3b_drm_funcs,
 	.exynos_panel_func = &ak3b_exynos_funcs,
+	.lhbm_effective_delay_frames = 1,
+	.lhbm_post_cmd_delay_frames = 1,
 	.reset_timing_ms = {1, 1, 20},
 	.reg_ctrl_enable = {
 		{PANEL_REG_ID_VDDI, 0},

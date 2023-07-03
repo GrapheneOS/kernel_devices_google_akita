@@ -100,13 +100,6 @@
 		samsung,pin-drv = <ZUMA_PIN_DRV_X1>;
 	};
 
-	/* correct for aoc-vsync-pins */
-	aoc_vsync_pins: aoc-vsync-pins {
-		samsung,pins = "gpp3-1";
-		samsung,pin-function = <EXYNOS_PIN_FUNC_INPUT>;
-		samsung,pin-pud = <EXYNOS_PIN_PULL_DOWN>;
-	};
-
 	sensor_mclk1_out: sensor-mclk1-out {
 		samsung,pin-drv = <ZUMA_PIN_DRV_X2>;
 	};
