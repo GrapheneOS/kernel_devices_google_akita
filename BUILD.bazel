@@ -229,6 +229,7 @@ kernel_build(
         "//private/google-modules/soc/gs:gki_aosp": "//aosp:android/abi_gki_aarch64_pixel",
         "//private/google-modules/soc/gs:gki_aosp_staging": "//aosp-staging:android/abi_gki_aarch64_pixel",
     }),
+    make_goals = _PIXEL_MAKE_GOALS,
     module_outs = [
         # keep sorted
         "drivers/i2c/i2c-dev.ko",
@@ -243,7 +244,6 @@ kernel_build(
         "net/wireless/cfg80211.ko",
     ],
     strip_modules = True,
-    make_goals = _PIXEL_MAKE_GOALS,
 )
 
 kernel_abi(
@@ -369,6 +369,7 @@ lto_dependant_kernel_module(
         "drivers/soc/google/pt/slc_pmon.ko",
         "drivers/soc/google/pt/slc_pt.ko",
         "drivers/soc/google/vh/kernel/cgroup/vh_cgroup.ko",
+        "drivers/soc/google/vh/kernel/fs/vh_fs.ko",
         "drivers/soc/google/vh/kernel/metrics/pixel_metrics.ko",
         "drivers/soc/google/vh/kernel/mm/vh_mm.ko",
         "drivers/soc/google/vh/kernel/pixel_em/pixel_em.ko",
