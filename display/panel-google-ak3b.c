@@ -13,6 +13,7 @@
 #include <linux/of_platform.h>
 #include <video/mipi_display.h>
 
+#include "include/trace/dpu_trace.h"
 #include "panel/panel-samsung-drv.h"
 
 static const struct drm_dsc_config pps_config = {
@@ -509,12 +510,17 @@ static int ak3b_set_op_hz(struct exynos_panel *ctx, unsigned int hz)
 		return 0;
 	}
 
+	DPU_ATRACE_BEGIN(__func__);
+
 	EXYNOS_DCS_BUF_ADD_SET(ctx, test_key_on_f0);
 	buf_add_frequency_select_cmd(ctx);
 	EXYNOS_DCS_BUF_ADD_SET(ctx, freq_update);
 	EXYNOS_DCS_BUF_ADD_SET_AND_FLUSH(ctx, test_key_off_f0);
 
 	dev_info(ctx->dev, "set op_hz at %u\n", hz);
+
+	DPU_ATRACE_END(__func__);
+
 	return 0;
 }
 
