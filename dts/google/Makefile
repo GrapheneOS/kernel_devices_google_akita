@@ -14,7 +14,8 @@ akita_overlays := \
 	zuma-akita-proto1_1-broadcom-gnss-sky.dtbo \
 	zuma-akita-proto1_1-samsung-gnss-sky.dtbo \
 	zuma-akita-evt1-broadcom-gnss.dtbo \
-	zuma-akita-evt1-samsung-gnss.dtbo
+	zuma-akita-evt1-samsung-gnss.dtbo \
+	zuma-akita-evt1_1.dtbo
 
 # DPM overlays
 akita_overlays += \
