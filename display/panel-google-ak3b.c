@@ -142,12 +142,6 @@ static const struct exynos_dsi_cmd ak3b_init_cmds[] = {
 
 	EXYNOS_DSI_CMD_SEQ_DELAY_REV(PANEL_REV_GE(PANEL_REV_EVT1), 10, MIPI_DCS_EXIT_SLEEP_MODE),
 
-	/* Frequencey settings */
-	EXYNOS_DSI_CMD0_REV(test_key_on_f0, PANEL_REV_PROTO1_1),
-	EXYNOS_DSI_CMD_SEQ_REV(PANEL_REV_PROTO1_1, 0x60, 0x08, 0x00), /* 60 hz HS */
-	EXYNOS_DSI_CMD0_REV(freq_update, PANEL_REV_PROTO1_1),
-	EXYNOS_DSI_CMD0_REV(test_key_off_f0, PANEL_REV_PROTO1_1),
-
 	/* GPO_DC Setting(HS 60Hz) */
 	EXYNOS_DSI_CMD0_REV(test_key_on_f0, PANEL_REV_GE(PANEL_REV_EVT1)),
 	EXYNOS_DSI_CMD_SEQ_REV(PANEL_REV_GE(PANEL_REV_EVT1),
@@ -156,6 +150,12 @@ static const struct exynos_dsi_cmd ak3b_init_cmds[] = {
 	EXYNOS_DSI_CMD0_REV(freq_update, PANEL_REV_GE(PANEL_REV_EVT1)),
 	/* Delay 110 ms after sending GPO_DC settings */
 	EXYNOS_DSI_CMD_REV(test_key_off_f0, 110, PANEL_REV_GE(PANEL_REV_EVT1)),
+
+	/* Frequencey settings */
+	EXYNOS_DSI_CMD0_REV(test_key_on_f0, PANEL_REV_GE(PANEL_REV_PROTO1_1)),
+	EXYNOS_DSI_CMD_SEQ_REV(PANEL_REV_GE(PANEL_REV_PROTO1_1), 0x60, 0x08, 0x00), /* 60 hz HS */
+	EXYNOS_DSI_CMD0_REV(freq_update, PANEL_REV_GE(PANEL_REV_PROTO1_1)),
+	EXYNOS_DSI_CMD0_REV(test_key_off_f0, PANEL_REV_GE(PANEL_REV_PROTO1_1)),
 
 	EXYNOS_DSI_CMD_SEQ(MIPI_DCS_SET_TEAR_ON, 0x00),
 	EXYNOS_DSI_CMD_SEQ(MIPI_DCS_SET_COLUMN_ADDRESS, 0x00, 0x00, 0x04, 0x37),
