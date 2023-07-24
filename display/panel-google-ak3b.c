@@ -13,6 +13,7 @@
 #include <linux/of_platform.h>
 #include <video/mipi_display.h>
 
+#include "include/trace/dpu_trace.h"
 #include "panel/panel-samsung-drv.h"
 
 static const struct drm_dsc_config pps_config = {
@@ -141,12 +142,6 @@ static const struct exynos_dsi_cmd ak3b_init_cmds[] = {
 
 	EXYNOS_DSI_CMD_SEQ_DELAY_REV(PANEL_REV_GE(PANEL_REV_EVT1), 10, MIPI_DCS_EXIT_SLEEP_MODE),
 
-	/* Frequencey settings */
-	EXYNOS_DSI_CMD0_REV(test_key_on_f0, PANEL_REV_PROTO1_1),
-	EXYNOS_DSI_CMD_SEQ_REV(PANEL_REV_PROTO1_1, 0x60, 0x08, 0x00), /* 60 hz HS */
-	EXYNOS_DSI_CMD0_REV(freq_update, PANEL_REV_PROTO1_1),
-	EXYNOS_DSI_CMD0_REV(test_key_off_f0, PANEL_REV_PROTO1_1),
-
 	/* GPO_DC Setting(HS 60Hz) */
 	EXYNOS_DSI_CMD0_REV(test_key_on_f0, PANEL_REV_GE(PANEL_REV_EVT1)),
 	EXYNOS_DSI_CMD_SEQ_REV(PANEL_REV_GE(PANEL_REV_EVT1),
@@ -155,6 +150,12 @@ static const struct exynos_dsi_cmd ak3b_init_cmds[] = {
 	EXYNOS_DSI_CMD0_REV(freq_update, PANEL_REV_GE(PANEL_REV_EVT1)),
 	/* Delay 110 ms after sending GPO_DC settings */
 	EXYNOS_DSI_CMD_REV(test_key_off_f0, 110, PANEL_REV_GE(PANEL_REV_EVT1)),
+
+	/* Frequencey settings */
+	EXYNOS_DSI_CMD0_REV(test_key_on_f0, PANEL_REV_GE(PANEL_REV_PROTO1_1)),
+	EXYNOS_DSI_CMD_SEQ_REV(PANEL_REV_GE(PANEL_REV_PROTO1_1), 0x60, 0x08, 0x00), /* 60 hz HS */
+	EXYNOS_DSI_CMD0_REV(freq_update, PANEL_REV_GE(PANEL_REV_PROTO1_1)),
+	EXYNOS_DSI_CMD0_REV(test_key_off_f0, PANEL_REV_GE(PANEL_REV_PROTO1_1)),
 
 	EXYNOS_DSI_CMD_SEQ(MIPI_DCS_SET_TEAR_ON, 0x00),
 	EXYNOS_DSI_CMD_SEQ(MIPI_DCS_SET_COLUMN_ADDRESS, 0x00, 0x00, 0x04, 0x37),
@@ -509,12 +510,34 @@ static int ak3b_set_op_hz(struct exynos_panel *ctx, unsigned int hz)
 		return 0;
 	}
 
+	DPU_ATRACE_BEGIN(__func__);
+
 	EXYNOS_DCS_BUF_ADD_SET(ctx, test_key_on_f0);
 	buf_add_frequency_select_cmd(ctx);
 	EXYNOS_DCS_BUF_ADD_SET(ctx, freq_update);
 	EXYNOS_DCS_BUF_ADD_SET_AND_FLUSH(ctx, test_key_off_f0);
 
 	dev_info(ctx->dev, "set op_hz at %u\n", hz);
+
+	if (hz == 120) {
+		/*
+		* We may transfer the frame for the first TE after switching from
+		* NS to HS mode. The DDIC read speed will change from 60Hz to 120Hz,
+		* but the DPU write speed will remain the same. In this case,
+		* underruns would happen. Waiting for an extra vblank here so that
+		* the frame can be postponed to the next TE to avoid the noises.
+		*/
+		dev_dbg(ctx->dev, "wait one vblank after NS to HS\n");
+
+		DPU_ATRACE_BEGIN("ak3b_wait_one_vblank");
+		if (unlikely(exynos_panel_wait_for_vblank(ctx))) {
+			usleep_range(8350, 8500);
+		}
+		DPU_ATRACE_END("ak3b_wait_one_vblank");
+	}
+
+	DPU_ATRACE_END(__func__);
+
 	return 0;
 }
 
