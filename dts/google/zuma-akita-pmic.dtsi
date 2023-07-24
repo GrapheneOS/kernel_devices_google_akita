@@ -154,9 +154,14 @@
 	subsys-name = "Spare";
 };
 
-/* replace L15M_SPARE to L22M_DISP */
+/* replace L22M_DISP with S9M_VDD_CPUCL0_M */
 &ch9 {
-	rail-name = "LDO22M";
+	rail-name = "BUCK9M";
+};
+
+/* replace VSYS_PWR_VBATT with VSYS_PWR_CAM */
+&ch10 {
+	rail-name = "VSEN_C1";
 };
 
 /* replace L29S_SPARE to L21S_VDD2L_MEM */
