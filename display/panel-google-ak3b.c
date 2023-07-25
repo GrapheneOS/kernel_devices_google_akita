@@ -93,13 +93,20 @@ static const u8 freq_update[] = { 0xF7, 0x0F };
 #define FREQUENCY_COUNT 3
 #define LHBM_BRIGHTNESS_INDEX_SIZE 4
 
-static const u8 lhbm_brightness_index[FREQUENCY_COUNT][LHBM_BRIGHTNESS_INDEX_SIZE] = {
+static const u8 lhbm_brightness_write_index[FREQUENCY_COUNT][LHBM_BRIGHTNESS_INDEX_SIZE] = {
 	{ 0xB0, 0x03, 0xD7, 0x66 }, /* HS120 */
 	{ 0xB0, 0x03, 0xDC, 0x66 }, /* HS60 */
 	{ 0xB0, 0x03, 0xE6, 0x66 }  /* NS60 */
 };
 
-static const u8 lhbm_brightness_reg = 0x66;
+static const u8 lhbm_brightness_read_index[FREQUENCY_COUNT][LHBM_BRIGHTNESS_INDEX_SIZE] = {
+	{ 0xB0, 0x00, 0x22, 0xD8 }, /* HS120 */
+	{ 0xB0, 0x00, 0x18, 0xD8 }, /* HS60 */
+	{ 0xB0, 0x00, 0x1D, 0xD8 }  /* NS60 */
+};
+
+static const u8 lhbm_brightness_write_reg = 0x66;
+static const u8 lhbm_brightness_read_reg = 0xD8;
 
 static const struct exynos_dsi_cmd ak3b_off_cmds[] = {
 	EXYNOS_DSI_CMD_SEQ(MIPI_DCS_SET_DISPLAY_OFF),
@@ -299,7 +306,7 @@ static void read_lhbm_gamma(struct exynos_panel *ctx, u8 *cmd, enum frequency fr
 
 	/* fill in gamma write command 0x66 in offset 0 */
 	cmd[0] = 0x66;
-	dev_dbg(ctx->dev, "%s_gamma: %*ph\n", frequency_str[freq],
+	dev_info(ctx->dev, "%s_gamma: %*ph\n", frequency_str[freq],
 		LHBM_GAMMA_CMD_SIZE - 1, cmd + 1);
 }
 
@@ -784,7 +791,7 @@ static void ak3b_set_local_hbm_brightness(struct exynos_panel *ctx, bool is_firs
 			else
 				group = LHBM_OVERDRIVE_GRP_MAX;
 		}
-		dev_dbg(ctx->dev, "check LHBM overdrive condition | gray=%u dbv=%u luma=%u\n",
+		dev_info(ctx->dev, "check LHBM overdrive condition | gray=%u dbv=%u luma=%u\n",
 			gray, dbv, luma);
 	}
 
@@ -795,14 +802,14 @@ static void ak3b_set_local_hbm_brightness(struct exynos_panel *ctx, bool is_firs
 		brt = ctl->brt_normal[freq];
 		ctl->overdrived = false;
 	}
-	cmd[0] = lhbm_brightness_reg;
+	cmd[0] = lhbm_brightness_write_reg;
 	for (i = 0; i < LHBM_BRT_LEN; i++)
 		cmd[i+1] = brt[i];
-	dev_dbg(ctx->dev, "set %s brightness: [%d] %*ph\n",
+	dev_info(ctx->dev, "set %s brightness: [%d] %*ph\n",
 		ctl->overdrived ? "overdrive" : "normal",
 		ctl->overdrived ? group : -1, LHBM_BRT_LEN, brt);
 	EXYNOS_DCS_BUF_ADD_SET(ctx, test_key_on_f0);
-	EXYNOS_DCS_BUF_ADD_SET(ctx, lhbm_brightness_index[freq]);
+	EXYNOS_DCS_BUF_ADD_SET(ctx, lhbm_brightness_write_index[freq]);
 	EXYNOS_DCS_BUF_ADD_SET(ctx, cmd);
 	EXYNOS_DCS_BUF_ADD_SET_AND_FLUSH(ctx, test_key_off_f0);
 }
@@ -900,8 +907,8 @@ static void ak3b_lhbm_brightness_init(struct exynos_panel *ctx)
 
 	for (freq = 0; freq < FREQUENCY_COUNT; freq++) {
 		EXYNOS_DCS_WRITE_TABLE(ctx, test_key_on_f0);
-		EXYNOS_DCS_WRITE_TABLE(ctx, lhbm_brightness_index[freq]);
-		ret = mipi_dsi_dcs_read(dsi, lhbm_brightness_reg,
+		EXYNOS_DCS_WRITE_TABLE(ctx, lhbm_brightness_read_index[freq]);
+		ret = mipi_dsi_dcs_read(dsi, lhbm_brightness_read_reg,
 			ctl->brt_normal[freq], LHBM_BRT_LEN);
 		EXYNOS_DCS_WRITE_TABLE(ctx, test_key_off_f0);
 
