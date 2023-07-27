@@ -467,6 +467,7 @@ static void ak3b_change_frequency(struct exynos_panel *ctx,
 				    const unsigned int vrefresh)
 {
 	const u8 hs60_setting[3] = {0x60, 0x08, 0x00};
+	const u8 ns60_setting[3] = {0x60, 0x18, 0x00};
 	const u8 hs120_setting[3] = {0x60, 0x00, 0x00};
 
 	if (!ctx || (vrefresh != 60 && vrefresh != 120))
@@ -477,7 +478,11 @@ static void ak3b_change_frequency(struct exynos_panel *ctx,
 		EXYNOS_DCS_BUF_ADD_SET(ctx, hs120_setting);
 		EXYNOS_DCS_BUF_ADD(ctx, 0xB9, 0x31);
 	} else {
-		EXYNOS_DCS_BUF_ADD_SET(ctx, hs60_setting);
+		if (ctx->op_hz == 120)
+			EXYNOS_DCS_BUF_ADD_SET(ctx, hs60_setting);
+		else
+			EXYNOS_DCS_BUF_ADD_SET(ctx, ns60_setting);
+
 		EXYNOS_DCS_BUF_ADD(ctx, 0xB9, 0x30);
 	}
 	EXYNOS_DCS_BUF_ADD_SET(ctx, freq_update);
