@@ -290,6 +290,7 @@
 
 				/* Thread priority */
 				transaction-thread-priority = <99>;
+				i2c-lock-group-id = <0>;
 			};
 
 			/* FRONT CAMERA LESHEN */
@@ -372,6 +373,7 @@
 
 				/* Thread priority */
 				transaction-thread-priority = <99>;
+				i2c-lock-group-id = <1>;
 			};
 
 			/* REAR ULTRA WIDE CAMERA LESHEN */
@@ -454,6 +456,7 @@
 
 				/* Thread priority */
 				transaction-thread-priority = <99>;
+				i2c-lock-group-id = <2>;
 			};
 
 			/* EEPROM NESSIE for OKSOKO*/
@@ -497,6 +500,7 @@
 					<0
 					 0
 					 0>;
+				i2c-lock-group-id = <0>;
 			};
 
 			/* EEPROM SMAUG for LESHEN */
@@ -532,6 +536,7 @@
 					"regulator";
 				power-down-seq-delays-us =
 					<0>;
+				i2c-lock-group-id = <1>;
 			};
 
 			/* EEPROM SMAUG for LESHEN-UW */
@@ -567,6 +572,7 @@
 					"regulator";
 				power-down-seq-delays-us =
 					<1000>;
+				i2c-lock-group-id = <2>;
 			};
 
 			/* Actuator NESSIE for OKSOKO */
@@ -619,6 +625,7 @@
 
 				/* Thread priority */
 				periodic-io-thread-priority = <99>;
+				i2c-lock-group-id = <0>;
 			};
 
 			/* OIS NESSIE for OKSOKO*/
@@ -671,6 +678,7 @@
 
 				/* Thread priority */
 				periodic-io-thread-priority = <99>;
+				i2c-lock-group-id = <0>;
 			};
 
 			flash0: flash@0 {
