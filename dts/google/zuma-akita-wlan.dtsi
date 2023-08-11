@@ -8,4 +8,5 @@
 
 &pcie_1 {       /* pcie ch1 used for the connection with WiFi */
 	max-link-speed = <LINK_SPEED_GEN2>;
+	use-msi = "true";
 };
