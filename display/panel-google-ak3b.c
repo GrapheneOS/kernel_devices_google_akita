@@ -531,23 +531,6 @@ static int ak3b_set_op_hz(struct exynos_panel *ctx, unsigned int hz)
 
 	dev_info(ctx->dev, "set op_hz at %u\n", hz);
 
-	if (hz == 120) {
-		/*
-		* We may transfer the frame for the first TE after switching from
-		* NS to HS mode. The DDIC read speed will change from 60Hz to 120Hz,
-		* but the DPU write speed will remain the same. In this case,
-		* underruns would happen. Waiting for an extra vblank here so that
-		* the frame can be postponed to the next TE to avoid the noises.
-		*/
-		dev_dbg(ctx->dev, "wait one vblank after NS to HS\n");
-
-		DPU_ATRACE_BEGIN("ak3b_wait_one_vblank");
-		if (unlikely(exynos_panel_wait_for_vblank(ctx))) {
-			usleep_range(8350, 8500);
-		}
-		DPU_ATRACE_END("ak3b_wait_one_vblank");
-	}
-
 	DPU_ATRACE_END(__func__);
 
 	return 0;
@@ -673,8 +656,9 @@ static int ak3b_set_brightness(struct exynos_panel *ctx, u16 br)
 static void ak3b_set_nolp_mode(struct exynos_panel *ctx,
 				  const struct exynos_panel_mode *pmode)
 {
-	unsigned int vrefresh = drm_mode_vrefresh(&pmode->mode);
-	u32 delay_us = mult_frac(1000, 1020, vrefresh);
+	const struct exynos_panel_mode *current_mode = ctx->current_mode;
+	unsigned int vrefresh = current_mode ? drm_mode_vrefresh(&current_mode->mode) : 30;
+	unsigned int te_usec = current_mode ? current_mode->exynos_mode.te_usec : 460;
 
 	if (!is_panel_active(ctx))
 		return;
@@ -683,7 +667,15 @@ static void ak3b_set_nolp_mode(struct exynos_panel *ctx,
 	/* backlight control and dimming */
 	ak3b_update_wrctrld(ctx);
 	ak3b_change_frequency(ctx, vrefresh);
-	usleep_range(delay_us, delay_us + 10);
+
+	DPU_ATRACE_BEGIN("ak3b_wait_one_vblank");
+	exynos_panel_wait_for_vsync_done(ctx, te_usec,
+			EXYNOS_VREFRESH_TO_PERIOD_USEC(vrefresh));
+
+	/* Additional sleep time to account for TE variability */
+	usleep_range(1000, 1010);
+	DPU_ATRACE_END("ak3b_wait_one_vblank");
+
 	EXYNOS_DCS_BUF_ADD_AND_FLUSH(ctx, MIPI_DCS_SET_DISPLAY_ON);
 
 	dev_info(ctx->dev, "exit LP mode\n");
@@ -1071,6 +1063,7 @@ static const struct exynos_panel_mode ak3b_lp_mode = {
 	.exynos_mode = {
 		.mode_flags = MIPI_DSI_CLOCK_NON_CONTINUOUS,
 		.vblank_usec = 120,
+		.te_usec = 460,
 		.bpc = 8,
 		.dsc = AK3_DSC,
 		.underrun_param = &underrun_param,
