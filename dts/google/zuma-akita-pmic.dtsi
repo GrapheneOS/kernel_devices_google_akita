@@ -164,6 +164,12 @@
 	rail-name = "VSEN_C1";
 };
 
+/* replace L9S_GNSS_CORE with SC */
+&ch20 {
+	rail-name = "BUCKC";
+	subsys-name = "UFS";
+};
+
 /* replace L29S_SPARE to L21S_VDD2L_MEM */
 &ch21 {
 	rail-name = "LDO21S";
