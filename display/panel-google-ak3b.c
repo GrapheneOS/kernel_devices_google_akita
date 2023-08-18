@@ -761,6 +761,8 @@ static void ak3b_set_local_hbm_brightness(struct exynos_panel *ctx, bool is_firs
 	if (!is_local_hbm_post_enabling_supported(ctx))
 		return;
 
+	DPU_ATRACE_BEGIN(__func__);
+
 	dev_info(ctx->dev, "set LHBM brightness at %s stage\n", is_first_stage ? "1st" : "2nd");
 	if (is_first_stage) {
 		u32 gray = exynos_drm_connector_get_lhbm_gray_level(&ctx->exynos_connector);
@@ -809,6 +811,8 @@ static void ak3b_set_local_hbm_brightness(struct exynos_panel *ctx, bool is_firs
 	EXYNOS_DCS_BUF_ADD_SET(ctx, lhbm_brightness_write_index[freq]);
 	EXYNOS_DCS_BUF_ADD_SET(ctx, cmd);
 	EXYNOS_DCS_BUF_ADD_SET_AND_FLUSH(ctx, test_key_off_f0);
+
+	DPU_ATRACE_END(__func__);
 }
 
 static void ak3b_set_local_hbm_mode_post(struct exynos_panel *ctx)
@@ -817,6 +821,12 @@ static void ak3b_set_local_hbm_mode_post(struct exynos_panel *ctx)
 
 	if (spanel->lhbm_ctl.overdrived)
 		ak3b_set_local_hbm_brightness(ctx, false);
+
+	/* b/291544944 Extra 1 frame delay for NS mode */
+	if (ak3b_get_frequency(ctx) == NS60) {
+		usleep_range(16700, 16710);
+		dev_info(ctx->dev, "wait 1 frame for NS mode\n");
+	}
 }
 
 static void ak3b_set_dimming_on(struct exynos_panel *exynos_panel,
@@ -1154,8 +1164,8 @@ const struct exynos_panel_desc google_ak3b = {
 	.no_lhbm_rr_constraints = true,
 	.panel_func = &ak3b_drm_funcs,
 	.exynos_panel_func = &ak3b_exynos_funcs,
-	.lhbm_effective_delay_frames = 2,
-	.lhbm_post_cmd_delay_frames = 3,
+	.lhbm_effective_delay_frames = 1,
+	.lhbm_post_cmd_delay_frames = 1,
 	.reset_timing_ms = {1, 1, 20},
 	.reg_ctrl_enable = {
 		{PANEL_REG_ID_VDDI, 0},
