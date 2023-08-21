@@ -1154,8 +1154,8 @@ const struct exynos_panel_desc google_ak3b = {
 	.no_lhbm_rr_constraints = true,
 	.panel_func = &ak3b_drm_funcs,
 	.exynos_panel_func = &ak3b_exynos_funcs,
-	.lhbm_effective_delay_frames = 1,
-	.lhbm_post_cmd_delay_frames = 1,
+	.lhbm_effective_delay_frames = 2,
+	.lhbm_post_cmd_delay_frames = 3,
 	.reset_timing_ms = {1, 1, 20},
 	.reg_ctrl_enable = {
 		{PANEL_REG_ID_VDDI, 0},
