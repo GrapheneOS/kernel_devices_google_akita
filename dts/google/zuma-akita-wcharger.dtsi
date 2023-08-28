@@ -57,7 +57,7 @@
 
 		google,power_mitigate_threshold = <90>;
 		google,has-sw-ramp;
-		google,epp_dcicl_default_ma = <750000>;
+		google,epp_dcicl_default_ma = <820000>;
 
 		pinctrl-names = "default";
 		pinctrl-0 = <&wc_irq &wc_en>;
@@ -72,9 +72,14 @@
 		idt,max_vout_mv = <10000>;  /* max voltage in mV */
 
 		google,q_value = <54>;
+		google,tx1801_q = <10>;
 		google,rf_value = <88>;
+		google,bpp_iop_vout_mv = <5500>;
+		google,epp_iop_vout_mv = <9500>;
+		google,iop_fod_mfg = [011B 00B3];
 		fod = [8D 34 82 32 95 18 8D 2A A4 F7 B1 CA 00 00 00 29];
-		fod_epp = [8B 4A 7C 51 93 13 8F 28 95 06 9F C8 00 00 00 29];
+		fod_epp = [8B 4A 7C 59 93 13 8F 28 95 06 9F C8 00 00 00 29];
+		fod_epp_iop = [8b 4a 7c 59 93 20 8f 28 95 1a 9f c8 00 00 00 29];
 
 		p9xxx_gpio: p9xxx_gpio {
 			gpio-controller;
