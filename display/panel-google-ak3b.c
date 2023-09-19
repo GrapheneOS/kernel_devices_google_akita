@@ -664,8 +664,10 @@ static void ak3b_set_nolp_mode(struct exynos_panel *ctx,
 		return;
 
 	EXYNOS_DCS_BUF_ADD_AND_FLUSH(ctx, MIPI_DCS_SET_DISPLAY_OFF);
-	/* backlight control and dimming */
-	ak3b_update_wrctrld(ctx);
+	/* AOD off setting */
+	EXYNOS_DCS_BUF_ADD_SET(ctx, test_key_on_f0);
+	EXYNOS_DCS_BUF_ADD(ctx, 0x53, 0x20);
+	EXYNOS_DCS_BUF_ADD_SET_AND_FLUSH(ctx, test_key_off_f0);
 	ak3b_change_frequency(ctx, vrefresh);
 
 	DPU_ATRACE_BEGIN("ak3b_wait_one_vblank");
