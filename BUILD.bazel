@@ -153,6 +153,8 @@ _AKITA_DTBOS = [
     "google/zuma-akita-evt1_1.dtbo",
     "google/zuma-akita-dvt1.dtbo",
     "google/zuma-akita-dvt1-2nd-fab.dtbo",
+    "google/zuma-akita-pvt1.dtbo",
+    "google/zuma-akita-mp.dtbo",
     "google-dts-base/zuma-dpm-eng.dtbo",
     "google-dts-base/zuma-dpm-user.dtbo",
     "google-dts-base/zuma-dpm-userdebug.dtbo",
