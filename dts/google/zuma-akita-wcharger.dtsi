@@ -27,6 +27,12 @@
 		samsung,pin-pud = <EXYNOS_PIN_PULL_UP>;
 		samsung,pin-drv = <ZUMA_PIN_DRV_X1>;
 	};
+	wc_pdet_irq: wc_pdet_irq {
+		samsung,pins = "gpa8-2"; /* QI_INT_R */
+		samsung,pin-function = <EXYNOS_PIN_FUNC_EINT>;
+		samsung,pin-pud = <EXYNOS_PIN_PULL_UP>;
+		samsung,pin-drv = <ZUMA_PIN_DRV_X1>;
+	};
 };
 
 &pinctrl_8 {
@@ -60,7 +66,7 @@
 		google,epp_dcicl_default_ma = <820000>;
 
 		pinctrl-names = "default";
-		pinctrl-0 = <&wc_irq &wc_en>;
+		pinctrl-0 = <&wc_pdet_irq &wc_irq &wc_en>;
 
 		idt,gpio_wlc_en = <&gph1 4 GPIO_ACTIVE_LOW>; /* QI_EN_L */
 		idt,gpio_qi_vbus_en = <&s2mpg14_gpio 2 GPIO_ACTIVE_HIGH>; /* QI_USB_VBUS_EN */
@@ -68,6 +74,7 @@
 		idt,irq_gpio = <&gpa8 1 GPIO_ACTIVE_LOW>; /* QI_INT_ODL */
 		idt,gpio_slct = <&s2mpg14_gpio 0 GPIO_ACTIVE_HIGH>; /* QI_BPP_EPP_SLCT */
 		idt,gpio_slct_value = <1>;
+		idt,irq_det_gpio = <&gpa8 2 GPIO_ACTIVE_LOW>;
 
 		idt,max_vout_mv = <10000>;  /* max voltage in mV */
 
