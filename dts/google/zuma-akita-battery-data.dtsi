@@ -51,10 +51,10 @@ maxim,config {
 		>;
 	};
 
-	/* AK3_ATL(3420)_RC2_5mOhm_Rev2.txt http://b/294800268#comment2 */
+	/* AK3_ATL(3420)_RC2_5mOhm_Rev4.txt http://b/309041344#comment5 */
 	maxim,atl-a1-1k {
 		maxim,batt-id-kohm = <1>;
-		maxim,model-version = <2>;
+		maxim,model-version = <3>;
 		maxim,force-reset-model-data;
 		maxim,rc1-tempco = /bits/ 16 <0x162c>;
 		maxim,rc2-tempco = /bits/ 16 <0x1002>;
@@ -90,7 +90,7 @@ maxim,config {
 			/* 0x002C */	0xED51	/* *TGain */
 			/* 0x002D */	0x1EBA	/* *TOFF */
 			/* 0x00B9 */	0x0014	/* *TCurve */
-			/* 0x002B */	0x6030	/* *nMiscCfg */
+			/* 0x002B */	0x6070	/* *nMiscCfg */
 			/* 0x0004 */	0x1900	/* AtRate @ 0x04 */
 			/* 0x0049 */	0x2241	/* convgcfg */
 			/* 0x0029 */	0x0613	/* FilterCFG */
@@ -99,10 +99,10 @@ maxim,config {
 		>;
 	};
 
-        /* COS: AK3_COS(3418)_RC2_5mOhm_Rev2.txt http://b/294800268#comment1 */
+        /* AK3_COS(3418)_RC2_5mOhm_Rev4.txt http://b/309041344#comment5 */
 	maxim,cos-a1-2k {
 		maxim,batt-id-kohm = <2>;
-		maxim,model-version = <2>;
+		maxim,model-version = <3>;
 		maxim,force-reset-model-data;
 		maxim,rc1-tempco = /bits/ 16 <0x0f1b>;
 		maxim,rc2-tempco = /bits/ 16 <0x1202>;
@@ -138,7 +138,7 @@ maxim,config {
 			/* 0x002C */	0xED51	/* *TGain */
 			/* 0x002D */	0x1EBA	/* *TOFF */
 			/* 0x00B9 */	0x0014	/* *TCurve */
-			/* 0x002B */	0x6030	/* *nMiscCfg */
+			/* 0x002B */	0x6070	/* *nMiscCfg */
 			/* 0x0004 */	0x1900	/* AtRate @ 0x04 */
 			/* 0x0049 */	0x2241	/* convgcfg */
 			/* 0x0029 */	0x0613	/* FilterCFG */
@@ -147,10 +147,10 @@ maxim,config {
 		>;
 	};
 
-	/* LSN: AK3_LWN(3419)_RC2_5mOhm_Rev2.txt http://b/294800268#comment1 */
+	/* AK3_LWN(3419)_RC2_5mOhm_Rev4.txt http://b/309041344#comment5 */
 	maxim,lwn-a1-4k {
 		maxim,batt-id-kohm = <4>;
-		maxim,model-version = <2>;
+		maxim,model-version = <3>;
 		maxim,force-reset-model-data;
 		maxim,rc1-tempco = /bits/ 16 <0x1733>;
 		maxim,rc2-tempco = /bits/ 16 <0x0c02>;
@@ -186,7 +186,7 @@ maxim,config {
 			/* 0x002C */	0xED51	/* *TGain */
 			/* 0x002D */	0x1EBA	/* *TOFF */
 			/* 0x00B9 */	0x0014	/* *TCurve */
-			/* 0x002B */	0x6030	/* *nMiscCfg */
+			/* 0x002B */	0x6070	/* *nMiscCfg */
 			/* 0x0004 */	0x1900	/* AtRate @ 0x04 */
 			/* 0x0049 */	0x2241	/* convgcfg */
 			/* 0x0029 */	0x0613	/* FilterCFG */
