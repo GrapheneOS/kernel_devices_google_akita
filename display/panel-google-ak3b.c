@@ -164,7 +164,8 @@ static const struct exynos_dsi_cmd ak3b_init_cmds[] = {
 	EXYNOS_DSI_CMD0_REV(freq_update, PANEL_REV_GE(PANEL_REV_PROTO1_1)),
 	EXYNOS_DSI_CMD0_REV(test_key_off_f0, PANEL_REV_GE(PANEL_REV_PROTO1_1)),
 
-	EXYNOS_DSI_CMD_SEQ(MIPI_DCS_SET_TEAR_ON, 0x00),
+	/* b/241726710 - remove the parameter to avoid MIPI DSIM timeout */
+	EXYNOS_DSI_CMD_SEQ(MIPI_DCS_SET_TEAR_ON),
 	EXYNOS_DSI_CMD_SEQ(MIPI_DCS_SET_COLUMN_ADDRESS, 0x00, 0x00, 0x04, 0x37),
 	EXYNOS_DSI_CMD_SEQ(MIPI_DCS_SET_PAGE_ADDRESS, 0x00, 0x00, 0x09, 0x5F),
 };
@@ -470,8 +471,13 @@ static void ak3b_change_frequency(struct exynos_panel *ctx,
 	const u8 ns60_setting[3] = {0x60, 0x18, 0x00};
 	const u8 hs120_setting[3] = {0x60, 0x00, 0x00};
 
-	if (!ctx || (vrefresh != 60 && vrefresh != 120))
+	if (unlikely(!ctx))
 		return;
+
+	if (vrefresh != 60 && vrefresh != 120) {
+		dev_warn(ctx->dev, "%s: invalid refresh rate %uhz\n", __func__, vrefresh);
+		return;
+	}
 
 	EXYNOS_DCS_BUF_ADD_SET(ctx, test_key_on_f0);
 	if (vrefresh == 120) {
@@ -657,8 +663,9 @@ static void ak3b_set_nolp_mode(struct exynos_panel *ctx,
 				  const struct exynos_panel_mode *pmode)
 {
 	const struct exynos_panel_mode *current_mode = ctx->current_mode;
-	unsigned int vrefresh = current_mode ? drm_mode_vrefresh(&current_mode->mode) : 30;
-	unsigned int te_usec = current_mode ? current_mode->exynos_mode.te_usec : 460;
+	unsigned int aod_vrefresh = current_mode ? drm_mode_vrefresh(&current_mode->mode) : 30;
+	unsigned int new_vrefresh = drm_mode_vrefresh(&pmode->mode);
+	unsigned int aod_te_usec = current_mode ? current_mode->exynos_mode.te_usec : 460;
 
 	if (!is_panel_active(ctx))
 		return;
@@ -668,11 +675,11 @@ static void ak3b_set_nolp_mode(struct exynos_panel *ctx,
 	EXYNOS_DCS_BUF_ADD_SET(ctx, test_key_on_f0);
 	EXYNOS_DCS_BUF_ADD(ctx, 0x53, 0x20);
 	EXYNOS_DCS_BUF_ADD_SET_AND_FLUSH(ctx, test_key_off_f0);
-	ak3b_change_frequency(ctx, vrefresh);
+	ak3b_change_frequency(ctx, new_vrefresh);
 
 	DPU_ATRACE_BEGIN("ak3b_wait_one_vblank");
-	exynos_panel_wait_for_vsync_done(ctx, te_usec,
-			EXYNOS_VREFRESH_TO_PERIOD_USEC(vrefresh));
+	exynos_panel_wait_for_vsync_done(ctx, aod_te_usec,
+			EXYNOS_VREFRESH_TO_PERIOD_USEC(aod_vrefresh));
 
 	/* Additional sleep time to account for TE variability */
 	usleep_range(1000, 1010);
