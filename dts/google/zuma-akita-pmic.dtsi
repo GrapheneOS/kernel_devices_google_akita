@@ -159,10 +159,14 @@
 	rail-name = "LDO22M";
 };
 
-/* replace L9S_GNSS_CORE with SC */
+&s_buck11_reg {
+	schematic-name = "S11S_VDD_INT_M";
+	subsys-name = "INT";
+};
+
+/* replace SC with S11S_VDD_INT_M */
 &ch20 {
-	rail-name = "BUCKC";
-	subsys-name = "UFS";
+	rail-name = "BUCK11S";
 };
 
 /* replace L29S_SPARE to L21S_VDD2L_MEM */
