@@ -16,4 +16,3 @@
 #include "zuma-akita-gsa-gsc.dtsi"
 #include "zuma-akita-wlan.dtsi"
 #include "zuma-akita-cp-s5300-thermal-zone.dtsi"
-#include "zuma-akita-dma-heap.dtsi"
