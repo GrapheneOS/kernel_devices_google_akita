@@ -1223,6 +1223,7 @@ const struct exynos_panel_desc google_ak3b = {
 	.max_luminance = 14000000,
 	.max_avg_luminance = 1200000,
 	.min_luminance = 5,
+	.keep_atc_on_for_op = true,
 	.bl_range = ak3b_bl_range,
 	.bl_num_ranges = ARRAY_SIZE(ak3b_bl_range),
 	.modes = ak3b_modes,
