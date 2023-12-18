@@ -40,19 +40,9 @@
 		thermal-sensors = <&zuma_tm1 1>;
 		trips {
 			trip_config1: trip-config1 {
-				temperature = <121000>;
-				hysteresis = <1000>;
-				type = "passive";
-			};
-			backup_shutdown_sw: backup-shutdown-sw {
-				temperature = <123000>;
-				hysteresis = <1000>;
-				type = "critical";
-			};
-			backup_shutdown_hw: backup-shutdown-hw {
 				temperature = <125000>;
 				hysteresis = <1000>;
-				type = "hot";
+				type = "passive";
 			};
 		};
 	};
@@ -89,9 +79,19 @@
 		thermal-sensors = <&zuma_tm1 4>;
 		trips {
 			trip_config4: trip-config4 {
-				temperature = <125000>;
+				temperature = <57500>;
 				hysteresis = <1000>;
 				type = "passive";
+			};
+			backup_shutdown_sw: backup-shutdown-sw {
+				temperature = <58500>;
+				hysteresis = <1000>;
+				type = "critical";
+			};
+			backup_shutdown_hw: backup-shutdown-hw {
+				temperature = <60500>;
+				hysteresis = <1000>;
+				type = "hot";
 			};
 		};
 	};
