@@ -69,8 +69,9 @@
 	status = "okay";
 };
 
-&drmdecon2 {
+&drmdecon1 {
 	status = "okay";
+	connector = <0x10>;
 };
 
 &m_ldo14_reg {
