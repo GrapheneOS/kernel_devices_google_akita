@@ -7,5 +7,9 @@
  */
 
 &farawimg {
-	size = <0x06400000>; /* 100MB */
+	size = <0x05000000>; /* 80MB */
+};
+
+&faceauth_dsp {
+	size = <0x01400000>; /* 20MB */
 };
