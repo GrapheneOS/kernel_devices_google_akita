@@ -51,10 +51,10 @@ maxim,config {
 		>;
 	};
 
-	/* AK3_ATL(3420)_RC2_5mOhm_Rev4.txt http://b/309041344#comment5 */
+	/* AK3_ATL(3420)_RC2_5mOhm_Rev5.txt b/322548406#comment1 */
 	maxim,atl-a1-1k {
 		maxim,batt-id-kohm = <1>;
-		maxim,model-version = <3>;
+		maxim,model-version = <6>;
 		maxim,force-reset-model-data;
 		maxim,rc1-tempco = /bits/ 16 <0x162c>;
 		maxim,fg-model = /bits/ 16 <
@@ -67,7 +67,7 @@ maxim,config {
 		>;
 		maxim,fg-params = /bits/ 16 <
 			/* 0x0036 */	0xf060	/* nIAvgEmpty -> IAvgEmpty */
-			/* 0x002a */	0x083b	/* nRelaxCFG -> RelaxCFG */
+			/* 0x002a */	0x1438	/* nRelaxCFG -> RelaxCFG */
 			/* 0x0028 */	0x260e	/* nLearnCFG -> LearnCFG */
 			/* 0x001D */	0x4217	/* Config: */
 			/* 0x00BB */	0x0090	/* Config2: OCVQen|DSOCIi */
@@ -97,10 +97,10 @@ maxim,config {
 		>;
 	};
 
-        /* AK3_COS(3418)_RC2_5mOhm_Rev4.txt http://b/309041344#comment5 */
+    /* AK3_COS(3418)_RC2_5mOhm_Rev5.txt b/322548406#comment2 */
 	maxim,cos-a1-2k {
 		maxim,batt-id-kohm = <2>;
-		maxim,model-version = <3>;
+		maxim,model-version = <6>;
 		maxim,force-reset-model-data;
 		maxim,rc1-tempco = /bits/ 16 <0x0f1b>;
 		maxim,fg-model = /bits/ 16 <
@@ -113,7 +113,7 @@ maxim,config {
 		>;
 		maxim,fg-params = /bits/ 16 <
 			/* 0x0036 */	0xf060	/* nIAvgEmpty -> IAvgEmpty */
-			/* 0x002a */	0x083b	/* nRelaxCFG -> RelaxCFG */
+			/* 0x002a */	0x1438	/* nRelaxCFG -> RelaxCFG */
 			/* 0x0028 */	0x260e	/* nLearnCFG -> LearnCFG */
 			/* 0x001D */	0x4217	/* Config: */
 			/* 0x00BB */	0x0090	/* Config2: OCVQen|DSOCIi */
@@ -143,10 +143,10 @@ maxim,config {
 		>;
 	};
 
-	/* AK3_LWN(3419)_RC2_5mOhm_Rev4.txt http://b/309041344#comment5 */
+	/* AK3_LWN(3419)_RC2_5mOhm_Rev5.txt b/322548406#comment1 */
 	maxim,lwn-a1-4k {
 		maxim,batt-id-kohm = <4>;
-		maxim,model-version = <3>;
+		maxim,model-version = <6>;
 		maxim,force-reset-model-data;
 		maxim,rc1-tempco = /bits/ 16 <0x1733>;
 		maxim,fg-model = /bits/ 16 <
@@ -159,7 +159,7 @@ maxim,config {
 		>;
 		maxim,fg-params = /bits/ 16 <
 			/* 0x0036 */	0xf060	/* nIAvgEmpty -> IAvgEmpty */
-			/* 0x002a */	0x083b	/* nRelaxCFG -> RelaxCFG */
+			/* 0x002a */	0x1438	/* nRelaxCFG -> RelaxCFG */
 			/* 0x0028 */	0x260e	/* nLearnCFG -> LearnCFG */
 			/* 0x001D */	0x4217	/* Config: */
 			/* 0x00BB */	0x0090	/* Config2: OCVQen|DSOCIi */
