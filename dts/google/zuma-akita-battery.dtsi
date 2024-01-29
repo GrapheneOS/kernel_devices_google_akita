@@ -211,3 +211,17 @@
 		#include "zuma-akita-battery-data.dtsi"
 	};
 };
+
+&google_battery {
+	google,batt-id-1-atl {
+		google,batt-id = <1>;
+		google,aacr-ref-cycles = <400 500 600 700 800>;
+		google,aacr-ref-fade10 = <  4  12  19  26  33>;
+	};
+
+	google,batt-id-4-lwn {
+		google,batt-id = <4>;
+		google,aacr-ref-cycles = <100 200 300 400 500 600 700 800>;
+		google,aacr-ref-fade10 = <  3  15  25  35  43  50  57  63>;
+	};
+};
