@@ -86,6 +86,11 @@ static const struct drm_dsc_config pps_config = {
 
 #define LHBM_RGB_RATIO_SIZE 3
 
+#define AK3B_TE_USEC_AOD 460
+#define AK3B_TE_USEC_120HZ 221
+#define AK3B_TE_USEC_60HZ_HS 8500
+#define AK3B_TE_USEC_60HZ_NS 320
+
 static const u8 test_key_on_f0[] = { 0xF0, 0x5A, 0x5A };
 static const u8 test_key_off_f0[] = { 0xF0, 0xA5, 0xA5 };
 static const u8 freq_update[] = { 0xF7, 0x0F };
@@ -727,6 +732,42 @@ static void ak3b_set_nolp_mode(struct exynos_panel *ctx,
 	dev_info(ctx->dev, "exit LP mode\n");
 }
 
+static u32 ak3b_get_te_width_usec(const enum frequency freq)
+{
+	switch (freq) {
+	case AOD:
+		return AK3B_TE_USEC_AOD;
+	case HS120:
+		return AK3B_TE_USEC_120HZ;
+	case HS60:
+		return AK3B_TE_USEC_60HZ_HS;
+	case NS60:
+	default:
+		return AK3B_TE_USEC_60HZ_NS;
+	}
+}
+
+static void ak3b_wait_for_vsync_done(struct exynos_panel *ctx, const enum frequency freq)
+{
+	u32 te_width_us = ak3b_get_te_width_usec(freq);
+	u32 vrefresh = 60;
+
+	if (freq == AOD) {
+		vrefresh = 30;
+	} else if (freq == HS120) {
+		vrefresh = 120;
+	}
+
+	dev_dbg(ctx->dev, "%s: %s\n", __func__, frequency_str[freq]);
+
+	DPU_ATRACE_BEGIN(__func__);
+	exynos_panel_wait_for_vsync_done(ctx, te_width_us,
+		EXYNOS_VREFRESH_TO_PERIOD_USEC(vrefresh));
+	/* add 1ms tolerance */
+	exynos_panel_msleep(1);
+	DPU_ATRACE_END(__func__);
+}
+
 static int ak3b_enable(struct drm_panel *panel)
 {
 	struct exynos_panel *ctx = container_of(panel, struct exynos_panel, panel);
@@ -765,6 +806,7 @@ static int ak3b_enable(struct drm_panel *panel)
 	if (pmode->exynos_mode.is_lp_mode)
 		exynos_panel_set_lp_mode(ctx, pmode);
 
+	ak3b_wait_for_vsync_done(ctx, NS60);
 	EXYNOS_DCS_BUF_ADD_AND_FLUSH(ctx, MIPI_DCS_SET_DISPLAY_ON); /* display on */
 
 	spanel->lhbm_ctl.hist_roi_configured = false;
