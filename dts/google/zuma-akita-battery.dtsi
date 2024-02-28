@@ -134,6 +134,8 @@
 	status = "okay";
 	clock-frequency = <400000>;
 
+	samsung,polling-mode;
+
 	/* also as max77759 pmic  */
 	max77729_pmic:max77729pmic@0x66 {
 		status = "okay";
