@@ -50,8 +50,6 @@
 	#address-cells = <1>;
 	#size-cells = <0>;
 
-	samsung,polling-mode;
-
 	p9222@61 {
 		dev-name = "p9222";
 		compatible = "idt,p9222";
