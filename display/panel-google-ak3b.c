@@ -86,11 +86,6 @@ static const struct drm_dsc_config pps_config = {
 
 #define LHBM_RGB_RATIO_SIZE 3
 
-#define AK3B_TE_USEC_AOD 460
-#define AK3B_TE_USEC_120HZ 221
-#define AK3B_TE_USEC_60HZ_HS 8500
-#define AK3B_TE_USEC_60HZ_NS 320
-
 static const u8 test_key_on_f0[] = { 0xF0, 0x5A, 0x5A };
 static const u8 test_key_off_f0[] = { 0xF0, 0xA5, 0xA5 };
 static const u8 freq_update[] = { 0xF7, 0x0F };
@@ -267,6 +262,9 @@ struct ak3b_panel {
 
 	/** @lhbm_ctl: lhbm brightness control */
 	struct ak3b_lhbm_ctl lhbm_ctl;
+
+	/** @needs_display_on: if display_on command needs to send after flip done */
+	bool needs_display_on;
 };
 
 #define to_spanel(ctx) container_of(ctx, struct ak3b_panel, base)
@@ -613,6 +611,33 @@ static int ak3b_atomic_check(struct exynos_panel *ctx, struct drm_atomic_state *
 	return 0;
 }
 
+static void ak3b_commit_done(struct exynos_panel *ctx)
+{
+	struct ak3b_panel *spanel = to_spanel(ctx);
+	struct drm_crtc_commit *commit;
+
+	if (!ctx->crtc || !ctx->crtc->state || !ctx->crtc->state->commit) {
+		dev_dbg(ctx->dev, "invalid crtc or commit\n");
+		return;
+	}
+
+	if (!is_panel_active(ctx) || !spanel->needs_display_on)
+		return;
+
+	commit = ctx->crtc->state->commit;
+
+	DPU_ATRACE_BEGIN("ak3b_wait_for_flip_done");
+	if (!wait_for_completion_timeout(&commit->flip_done, msecs_to_jiffies(100)))
+		dev_warn(ctx->dev, "timeout when waiting for flip done\n");
+	DPU_ATRACE_END("ak3b_wait_for_flip_done");
+
+	EXYNOS_DCS_BUF_ADD_AND_FLUSH(ctx, MIPI_DCS_SET_DISPLAY_ON);
+
+	spanel->needs_display_on = false;
+
+	dev_info(ctx->dev, "%s: DISPLAY_ON\n", __func__);
+}
+
 static void ak3b_update_wrctrld(struct exynos_panel *ctx)
 {
 	u8 val = AK3B_WRCTRLD_BCTRL_BIT;
@@ -732,42 +757,6 @@ static void ak3b_set_nolp_mode(struct exynos_panel *ctx,
 	dev_info(ctx->dev, "exit LP mode\n");
 }
 
-static u32 ak3b_get_te_width_usec(const enum frequency freq)
-{
-	switch (freq) {
-	case AOD:
-		return AK3B_TE_USEC_AOD;
-	case HS120:
-		return AK3B_TE_USEC_120HZ;
-	case HS60:
-		return AK3B_TE_USEC_60HZ_HS;
-	case NS60:
-	default:
-		return AK3B_TE_USEC_60HZ_NS;
-	}
-}
-
-static void ak3b_wait_for_vsync_done(struct exynos_panel *ctx, const enum frequency freq)
-{
-	u32 te_width_us = ak3b_get_te_width_usec(freq);
-	u32 vrefresh = 60;
-
-	if (freq == AOD) {
-		vrefresh = 30;
-	} else if (freq == HS120) {
-		vrefresh = 120;
-	}
-
-	dev_dbg(ctx->dev, "%s: %s\n", __func__, frequency_str[freq]);
-
-	DPU_ATRACE_BEGIN(__func__);
-	exynos_panel_wait_for_vsync_done(ctx, te_width_us,
-		EXYNOS_VREFRESH_TO_PERIOD_USEC(vrefresh));
-	/* add 1ms tolerance */
-	exynos_panel_msleep(1);
-	DPU_ATRACE_END(__func__);
-}
-
 static int ak3b_enable(struct drm_panel *panel)
 {
 	struct exynos_panel *ctx = container_of(panel, struct exynos_panel, panel);
@@ -782,7 +771,7 @@ static int ak3b_enable(struct drm_panel *panel)
 	}
 	mode = &pmode->mode;
 
-	dev_dbg(ctx->dev, "%s\n", __func__);
+	dev_dbg(ctx->dev, "%s+\n", __func__);
 
 	exynos_panel_reset(ctx);
 
@@ -806,11 +795,21 @@ static int ak3b_enable(struct drm_panel *panel)
 	if (pmode->exynos_mode.is_lp_mode)
 		exynos_panel_set_lp_mode(ctx, pmode);
 
-	ak3b_wait_for_vsync_done(ctx, NS60);
-	EXYNOS_DCS_BUF_ADD_AND_FLUSH(ctx, MIPI_DCS_SET_DISPLAY_ON); /* display on */
-
 	spanel->lhbm_ctl.hist_roi_configured = false;
+	spanel->needs_display_on = true;
+
+	dev_dbg(ctx->dev, "%s-\n", __func__);
+
 	return 0;
+}
+
+static int ak3b_disable(struct drm_panel *panel)
+{
+	struct exynos_panel *exynos_panel = container_of(panel, struct exynos_panel, panel);
+	struct ak3b_panel *spanel = to_spanel(exynos_panel);
+
+	spanel->needs_display_on = false;
+	return exynos_panel_disable(panel);
 }
 
 static void ak3b_set_hbm_mode(struct exynos_panel *exynos_panel,
@@ -1086,7 +1085,6 @@ static void ak3b_set_ssc_mode(struct exynos_panel *exynos_panel,
 	dev_info(exynos_panel->dev, "ssc_mode=%d \n", exynos_panel->ssc_mode);
 }
 
-
 static const struct exynos_display_underrun_param underrun_param = {
 	.te_idle_us = 1000,
 	.te_var = 1,
@@ -1194,7 +1192,7 @@ static const struct exynos_panel_mode ak3b_lp_mode = {
 };
 
 static const struct drm_panel_funcs ak3b_drm_funcs = {
-	.disable = exynos_panel_disable,
+	.disable = ak3b_disable,
 	.unprepare = exynos_panel_unprepare,
 	.prepare = exynos_panel_prepare,
 	.enable = ak3b_enable,
@@ -1220,6 +1218,7 @@ static const struct exynos_panel_funcs ak3b_exynos_funcs = {
 	.set_op_hz = ak3b_set_op_hz,
 	.read_id = exynos_panel_read_ddic_id,
 	.atomic_check = ak3b_atomic_check,
+	.commit_done = ak3b_commit_done,
 	.set_ssc_mode = ak3b_set_ssc_mode,
 };
 
