@@ -1042,15 +1042,6 @@ static void ak3b_panel_init(struct exynos_panel *ctx)
 	ak3b_send_aod_without_blink_settings(ctx);
 }
 
-static void ak3b_get_panel_rev(struct exynos_panel *ctx, u32 id)
-{
-	/* extract command 0xDB */
-	u8 build_code = (id & 0xFF00) >> 8;
-	u8 rev = ((build_code & 0xE0) >> 3) | ((build_code & 0x0C) >> 2);
-
-	exynos_panel_get_panel_rev(ctx, rev);
-}
-
 static int ak3b_panel_probe(struct mipi_dsi_device *dsi)
 {
 	struct ak3b_panel *spanel;
@@ -1211,7 +1202,7 @@ static const struct exynos_panel_funcs ak3b_exynos_funcs = {
 	.is_mode_seamless = ak3b_is_mode_seamless,
 	.mode_set = ak3b_mode_set,
 	.panel_init = ak3b_panel_init,
-	.get_panel_rev = ak3b_get_panel_rev,
+	.get_panel_rev = exynos_panel_get_revision_by_module_ids,
 	.get_te2_edges = exynos_panel_get_te2_edges,
 	.configure_te2_edges = exynos_panel_configure_te2_edges,
 	.update_te2 = ak3b_update_te2,
@@ -1220,6 +1211,16 @@ static const struct exynos_panel_funcs ak3b_exynos_funcs = {
 	.atomic_check = ak3b_atomic_check,
 	.commit_done = ak3b_commit_done,
 	.set_ssc_mode = ak3b_set_ssc_mode,
+};
+
+static const struct panel_module_id_info ak3b_module_ids[] = {
+	{ 0x0080100E, PANEL_REV_PROTO1 },
+	{ 0x0080110E, PANEL_REV_PROTO1 },
+	{ 0x0080140E, PANEL_REV_PROTO1_1 },
+	{ 0x0080201E, PANEL_REV_EVT1 },
+	{ 0x0080241E, PANEL_REV_EVT1_1 },
+	{ 0x0080401E, PANEL_REV_DVT1 },
+	{ 0x0080801E, PANEL_REV_PVT },   /* PVT/MP */
 };
 
 const struct brightness_capability ak3b_brightness_capability = {
@@ -1290,6 +1291,8 @@ const struct exynos_panel_desc google_ak3b = {
 		{PANEL_REG_ID_VCI, 0},
 		{PANEL_REG_ID_VDDI, 0},
 	},
+	.module_ids = ak3b_module_ids,
+	.num_module_ids = ARRAY_SIZE(ak3b_module_ids),
 };
 
 static const struct of_device_id exynos_panel_of_match[] = {
