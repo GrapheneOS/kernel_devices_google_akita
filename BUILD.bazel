@@ -372,6 +372,7 @@ lto_dependant_kernel_module(
         "drivers/soc/google/gs-chipid.ko",
         "drivers/soc/google/gsa/gsa.ko",
         "drivers/soc/google/gsa/gsa_gsc.ko",
+        "drivers/soc/google/gsa/tzprot.ko",
         "drivers/soc/google/hardlockup-debug.ko",
         "drivers/soc/google/hardlockup-watchdog.ko",
         "drivers/soc/google/perf_trace_counters.ko",
