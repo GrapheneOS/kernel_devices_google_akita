@@ -37,4 +37,12 @@ if [ "${#}" = "0" ]; then
   fi
 fi
 
+# Find `--page_size=16k` in the list of arguments, and append bazel
+# parameters required to build a 16k page size kernel.
+for arg in "$@"; do
+  if [[ "$arg" == "--page_size=16k" ]]; then
+    parameters+=" --config=no_download_gki"
+  fi
+done
+
 exec tools/bazel run ${parameters} --config=stamp --config=akita --config=fast //private/devices/google/akita:zuma_akita_dist "$@"
