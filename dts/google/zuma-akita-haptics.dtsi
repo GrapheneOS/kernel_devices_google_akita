@@ -69,9 +69,6 @@
 	#size-cells = <0>;
 	status = "okay";
 
-	pinctrl-names = "default";
-	pinctrl-0 = <&hsi2c0_bus>;
-
 	clock-frequency = <1000000>;
 
 	cs40l26a@43 {
